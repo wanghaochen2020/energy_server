@@ -1,0 +1,3 @@
+time="2022-05-13 20:33:53" level=info Agent=PostmanRuntime/7.28.0 DataSize=23 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/adduser SpendTime="62 ms" Status=200
+time="2022-05-13 20:35:26" level=info Agent=PostmanRuntime/7.28.0 DataSize=185 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/login SpendTime="47 ms" Status=200
+time="2022-05-13 20:36:23" level=info Agent=PostmanRuntime/7.28.0 DataSize=23 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/userJwt SpendTime="1 ms" Status=200
