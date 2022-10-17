@@ -1,3 +1,4 @@
-time="2022-05-13T20:33:53+08:00" level=info Agent=PostmanRuntime/7.28.0 DataSize=23 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/adduser SpendTime="62 ms" Status=200
-time="2022-05-13T20:35:26+08:00" level=info Agent=PostmanRuntime/7.28.0 DataSize=185 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/login SpendTime="47 ms" Status=200
-time="2022-05-13T20:36:23+08:00" level=info Agent=PostmanRuntime/7.28.0 DataSize=23 HostName=LAPTOP-E07LTF2D Ip=127.0.0.1 Method=POST Path=/api/userJwt SpendTime="1 ms" Status=200
+time="2022-10-17T23:32:33+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=0 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=analyse-energy-station" SpendTime="12293 ms" Status=200
+time="2022-10-17T23:32:55+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=0 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=analyse-energy-station" SpendTime="20077 ms" Status=200
+time="2022-10-17T23:33:25+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=0 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=analyse-energy-station" SpendTime="18300 ms" Status=200
+022-10-07T13:23:11+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=0 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=system-energy-station" SpendTime="31817 ms" Status=200
