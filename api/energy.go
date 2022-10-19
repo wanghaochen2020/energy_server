@@ -19,12 +19,12 @@ var (
 )
 
 func boiler_efficiency_day(c *gin.Context) []float64 {
-	var finalData []float64
+	var finalData [30]float64
+	lenFin := 0
 	// 根据当前时间查redis有无已计算好的数据
 	// now := time.Now().Local()
 	now, _ := time.Parse("2006/01/02 15:04:05", "2022/09/13 03:37:02")
 	dayStr := fmt.Sprintf("%d/%02d/%02d", now.Year(), now.Month(), now.Day())
-	hourStr := fmt.Sprintf("%d/%02d/%02d %02d", now.Year(), now.Month(), now.Day(), now.Hour())
 	data, err := model.RedisClient.LRange(dayStr+" boiler_efficiency_day", 0, int64(now.Hour())).Result()
 	lredis := len(data)
 	if err == nil && lredis == now.Hour()+1 {
@@ -35,23 +35,27 @@ func boiler_efficiency_day(c *gin.Context) []float64 {
 				available = false
 				break
 			}
-			finalData = append(finalData, floatData)
+			finalData[i] = floatData
+			lenFin++
 		}
 		if available {
-			return finalData
+			return finalData[:lenFin]
 		}
 	}
 	// redis没有，去mongo查当天前几个小时的数据
 	var result defs.CalculationResultFloat
 	err = model.MongoResult.FindOne(context.TODO(), bson.D{{"time", dayStr}, {"name", "boiler_efficiency_day"}}).Decode(&result)
-	finalData = result.Value
-	// mongo没有的数据和这个小时的数据重新计算
-	if len(finalData) == now.Hour()+1 {
-		finalData = finalData[:len(finalData)-1]
+	for i, v := range result.Value {
+		finalData[i] = v
 	}
-	for i := len(finalData); i <= now.Hour(); i++ {
-		ans := calc.BoilerEfficiency(hourStr)
-		finalData = append(finalData, ans)
+	lenFin = len(result.Value)
+	// mongo没有的数据和这个小时的数据重新计算
+	if lenFin == now.Hour()+1 {
+		lenFin--
+	}
+	for i := lenFin; i <= now.Hour(); i++ {
+		finalData[i] = calc.BoilerEfficiency(fmt.Sprintf("%s %02d", dayStr, i))
+		lenFin++
 	}
 	// 结果写入mongo
 	model.MongoResult.DeleteOne(context.TODO(), bson.D{{"time", dayStr}, {"name", "boiler_efficiency_day"}})
@@ -59,16 +63,16 @@ func boiler_efficiency_day(c *gin.Context) []float64 {
 	// 并存入redis
 	if lredis == now.Hour() {
 		// 只用插入最新数据即可
-		model.RedisClient.RPush(dayStr+" boiler_efficiency_day", finalData[len(finalData)-1])
+		model.RedisClient.RPush(dayStr+" boiler_efficiency_day", finalData[lenFin-1])
 	} else {
 		// 重新写入数据并设置ttl
 		model.RedisClient.Del(dayStr + " boiler_efficiency_day")
-		for i := 0; i < len(finalData); i++ {
+		for i := 0; i < lenFin; i++ {
 			model.RedisClient.RPush(dayStr+" boiler_efficiency_day", finalData[i])
 		}
 		model.RedisClient.Expire(dayStr+" boiler_efficiency_day", time.Minute) //每分钟更新一次
 	}
-	return finalData
+	return finalData[:lenFin]
 }
 
 func GetPageData(c *gin.Context) {

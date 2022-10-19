@@ -45,7 +45,20 @@ energy
 }
 ```
 
+#### opc_data：存储原始数据
+
+```json
+{
+    "itemid": "server.A%E6%B3%B5%E8%BF%90%E8%A1%8C1",
+    "value": [false, false, true, true],
+    "time": "2022/09/13 03"
+}
+```
+
+
+
 ### redis文档
+
 使用db2，存储表格所需数据，命名为"2022/05/01 08 table_name"，前面表示本地时间的年月日时，table_name为表格名字
 
 | 表格         | table_name            | time精确到         | 值格式                                                |
