@@ -10,6 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+type MinParam struct {
+	HourStr string
+	Min     int
+}
+
 var (
 	err error
 )
@@ -57,7 +62,7 @@ func getOpcFloatList(itemid string, time string) ([]float64, bool) {
 
 }
 
-func BoilerEfficiency(hourStr string) float64 {
+func boilerEfficiency(hourStr string) float64 {
 	q1 := 0.0
 	q2 := 0.0
 	for i := 1; i <= 4; i++ {
@@ -83,14 +88,235 @@ func BoilerEfficiency(hourStr string) float64 {
 		}
 		minLen := utils.Min(len(Tout), len(Tin), len(Oa), len(Ob), len(w))
 		for j := 0; j < minLen; j++ {
+			if utils.Zero(Tout[j], Tin[j]) {
+				continue
+			}
 			q1 += (utils.Bool2Float(Oa[j]) + utils.Bool2Float(Ob[j])) * (Tout[j] - Tin[j])
 			q2 += w[j]
 		}
 	}
 	q1 *= 4.2 * 137 * 1e6 / 60
-	q2 *= 60000 //目前功率单位未知，公式暂用kW
+	q2 *= 60000 //目前功率单位未知，公式暂用kW，最后的值的单位是J
 	if q2 == 0 {
 		return 0
 	}
 	return q1 / q2
+}
+
+func watertankEfficiency(hourStr string) float64 {
+	q1 := 0.0
+	var Tinitial float64
+	Taver := 0.0
+	h, ok := getOpcFloatList("server.OUTPUT_P10", hourStr)
+	if !ok {
+		return 0
+	}
+	Tin, ok := getOpcFloatList("server.OUTPUT_T3", hourStr)
+	if !ok {
+		return 0
+	}
+	Tout, ok := getOpcFloatList("server.OUTPUT_T4", hourStr)
+	if !ok {
+		return 0
+	}
+	minLen := utils.Min(len(h), len(Tin), len(Tout))
+	if minLen == 0 {
+		return 0
+	}
+	if utils.Zero(Tin[0]) {
+		return 0
+	}
+	Tinitial = Tin[0]
+	Taver = Tinitial
+	averCount := 1
+	for i := 1; i < minLen; i++ {
+		if utils.Zero(h[i], h[i-1], Tin[i], Tout[i]) {
+			continue
+		}
+		q1 += ((h[i]-h[i-1])*100 + 0*0 /*预留给小水箱的位置，目前未得到相关数据*/) * (Tin[i] - Tout[i])
+		Taver += Tin[i]
+		averCount++
+	}
+	Taver /= float64(averCount)
+	q2 := (Taver - Tinitial) * 1055
+	if q2 == 0 {
+		return 0
+	}
+	return q1 / q2
+}
+
+func energystationEfficiency(hourStr string) float64 {
+	totalQ1, ok := getOpcFloatList("server.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", hourStr) //RLB_累计热量
+	if !ok {
+		return 0
+	}
+	APGL2, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
+	if !ok {
+		return 0
+	}
+	AZ1, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
+	if !ok {
+		return 0
+	}
+	var w [][]float64
+	for i := 1; i <= 4; i++ {
+		w[i], _ = getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+	}
+	minLen := utils.Min(len(totalQ1), len(APGL2), len(AZ1), utils.Max(len(w[1]), len(w[2]), len(w[3]), len(w[4])))
+	left := 0
+	right := 0
+	for i := 0; i < minLen; i++ {
+		if utils.Zero(totalQ1[i], APGL2[i], AZ1[i]) {
+			continue
+		}
+		left = i
+		break
+	}
+	for i := minLen - 1; i >= 0; i-- {
+		if utils.Zero(totalQ1[i], APGL2[i], AZ1[i]) {
+			continue
+		}
+		right = i
+		break
+	}
+	if left >= right {
+		return 0
+	}
+	q23 := 0.0
+	for i := 1; i <= 4; i++ {
+		for j := left; j < utils.Min(right+1, len(w[i])); j++ {
+			q23 += w[i][j]
+		}
+	}
+	q23 /= 60 //目前功率单位未知，公式暂用kW，最后的值的单位是kW·h
+	q1 := totalQ1[right] - totalQ1[left]
+	q2 := APGL2[right] - APGL2[left] + AZ1[right] - AZ1[left] + q23
+	if q2 == 0 {
+		return 0
+	}
+	return q1 / q2
+}
+
+func deviceOnlineRate(minStr string) float64 { //应该由负责从rebbit转移数据到数据库的服务计算
+	return 0
+}
+
+func boilerPower(hourStr string, min int) float64 {
+	ans := 0.0
+	for i := 1; i <= 4; i++ {
+		w, _ := getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		if len(w) < min {
+			continue
+		}
+		ans += w[min]
+	}
+	return ans
+}
+
+func energystationCarbonDay(hourStr string) float64 {
+	APGL2, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
+	if !ok {
+		return 0
+	}
+	AZ1, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
+	if !ok {
+		return 0
+	}
+	q23 := 0.0
+	for i := 1; i <= 4; i++ {
+		w, ok := getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		if !ok {
+			continue
+		}
+		for j := 0; j < len(w); j++ {
+			q23 += w[j]
+		}
+	}
+	l1 := -1
+	for i := 0; i < len(APGL2); i++ {
+		if utils.Zero(APGL2[i]) {
+			continue
+		}
+		l1 = i
+		break
+	}
+	r1 := -1
+	for i := len(APGL2) - 1; i >= 0; i-- {
+		if utils.Zero(APGL2[i]) {
+			continue
+		}
+		r1 = i
+		break
+	}
+	l2 := -1
+	for i := 0; i < len(AZ1); i++ {
+		if utils.Zero(AZ1[i]) {
+			continue
+		}
+		l2 = i
+		break
+	}
+	r2 := -1
+	for i := len(AZ1) - 1; i >= 0; i-- {
+		if utils.Zero(AZ1[i]) {
+			continue
+		}
+		r1 = i
+		break
+	}
+	q21 := 0.0
+	q22 := 0.0
+	if l1 != -1 {
+		q21 = APGL2[r1] - APGL2[l1]
+	}
+	if l2 != -1 {
+		q21 = APGL2[r2] - APGL2[l2]
+	}
+	t := (q21 + q22 + q23/60) / 1000 * 0.604 //吨CO2
+	return t
+}
+
+func energystationCarbonWeek(dayStr string) float64 {
+	return 0
+}
+
+func Calc(tableName string, params interface{}) interface{} {
+	switch tableName {
+	case "boiler_efficiency_day":
+		p, ok := params.(string)
+		if ok {
+			return boilerEfficiency(p)
+		}
+	case "watertank_efficiency_day":
+		p, ok := params.(string)
+		if ok {
+			return watertankEfficiency(p)
+		}
+	case "energystation_efficiency_day":
+		p, ok := params.(string)
+		if ok {
+			return energystationEfficiency(p)
+		}
+	case "device_online_rate_hour":
+		p, ok := params.(string)
+		if ok {
+			return deviceOnlineRate(p)
+		}
+	case "boiler_power_hour":
+		p, ok := params.(MinParam)
+		if ok {
+			return boilerPower(p.HourStr, p.Min)
+		}
+	case "energystation_carbon_day":
+		p, ok := params.(string)
+		if ok {
+			return energystationCarbonDay(p)
+		}
+	case "energystation_carbon_week":
+		p, ok := params.(string)
+		if ok {
+			return energystationCarbonWeek(p)
+		}
+	}
+	return nil
 }

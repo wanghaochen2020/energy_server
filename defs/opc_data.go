@@ -6,12 +6,17 @@ type OpcData struct {
 	Value  []interface{} `bson:"value"`
 }
 
-type CalculationResultFloat struct {
+type CalculationResultFloatList struct {
 	Time  string    `bson:"time"`
 	Name  string    `bson:"name"`
 	Value []float64 `bson:"value"`
 }
 
+type CalculationResultFloat struct {
+	Time  string  `bson:"time"`
+	Name  string  `bson:"name"`
+	Value float64 `bson:"value"`
+}
 type OpcUpdateTime struct {
 	UpdateTime string `bson:"update_time"`
 	Group      string `bson:"group"`
