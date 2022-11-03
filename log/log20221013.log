@@ -1,2 +1,0 @@
-time="2022-10-13 23:10:30" level=info Agent=PostmanRuntime/7.29.2 DataSize=0 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=analyse-energy-station" SpendTime="240 ms" Status=200
-time="2022-10-13 23:12:49" level=info Agent=PostmanRuntime/7.29.2 DataSize=13 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/pageData?page=analyse-energy-station" SpendTime="5633 ms" Status=200

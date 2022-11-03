@@ -66,23 +66,23 @@ func boilerEfficiency(hourStr string) float64 {
 	q1 := 0.0
 	q2 := 0.0
 	for i := 1; i <= 4; i++ {
-		Tout, ok := getOpcFloatList("server.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%87%BA%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际出水温度
+		Tout, ok := getOpcFloatList("ZLZ.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%87%BA%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际出水温度
 		if !ok {
 			continue
 		}
-		Tin, ok := getOpcFloatList("server.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%9B%9E%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际回水温度
+		Tin, ok := getOpcFloatList("ZLZ.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%9B%9E%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际回水温度
 		if !ok {
 			continue
 		}
-		Oa, ok := getOpcBoolList("server.A%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //A泵运行
+		Oa, ok := getOpcBoolList("ZLZ.A%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //A泵运行
 		if !ok {
 			continue
 		}
-		Ob, ok := getOpcBoolList("server.B%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //B泵运行
+		Ob, ok := getOpcBoolList("ZLZ.B%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //B泵运行
 		if !ok {
 			continue
 		}
-		w, ok := getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		w, ok := getOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
 		if !ok {
 			continue
 		}
@@ -107,15 +107,15 @@ func watertankEfficiency(hourStr string) float64 {
 	q1 := 0.0
 	var Tinitial float64
 	Taver := 0.0
-	h, ok := getOpcFloatList("server.OUTPUT_P10", hourStr)
+	h, ok := getOpcFloatList("ZLZ.OUTPUT_P10", hourStr)
 	if !ok {
 		return 0
 	}
-	Tin, ok := getOpcFloatList("server.OUTPUT_T3", hourStr)
+	Tin, ok := getOpcFloatList("ZLZ.OUTPUT_T3", hourStr)
 	if !ok {
 		return 0
 	}
-	Tout, ok := getOpcFloatList("server.OUTPUT_T4", hourStr)
+	Tout, ok := getOpcFloatList("ZLZ.OUTPUT_T4", hourStr)
 	if !ok {
 		return 0
 	}
@@ -146,21 +146,21 @@ func watertankEfficiency(hourStr string) float64 {
 }
 
 func energystationEfficiency(hourStr string) float64 {
-	totalQ1, ok := getOpcFloatList("server.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", hourStr) //RLB_累计热量
+	totalQ1, ok := getOpcFloatList("ZLZ.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", hourStr) //RLB_累计热量
 	if !ok {
 		return 0
 	}
-	APGL2, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
+	APGL2, ok := getOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
 	if !ok {
 		return 0
 	}
-	AZ1, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
+	AZ1, ok := getOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
 	if !ok {
 		return 0
 	}
-	var w [][]float64
+	w := make([][]float64, 5)
 	for i := 1; i <= 4; i++ {
-		w[i], _ = getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		w[i], _ = getOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
 	}
 	minLen := utils.Min(len(totalQ1), len(APGL2), len(AZ1), utils.Max(len(w[1]), len(w[2]), len(w[3]), len(w[4])))
 	left := 0
@@ -197,14 +197,15 @@ func energystationEfficiency(hourStr string) float64 {
 	return q1 / q2
 }
 
-func deviceOnlineRate(minStr string) float64 { //应该由负责从rebbit转移数据到数据库的服务计算
+func deviceOnlineRate(minStr string) float64 {
+	// model.MongoOPC.Find()
 	return 0
 }
 
 func boilerPower(hourStr string, min int) float64 {
 	ans := 0.0
 	for i := 1; i <= 4; i++ {
-		w, _ := getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		w, _ := getOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
 		if len(w) < min {
 			continue
 		}
@@ -213,18 +214,18 @@ func boilerPower(hourStr string, min int) float64 {
 	return ans
 }
 
-func energystationCarbonDay(hourStr string) float64 {
-	APGL2, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
+func energystationCarbonHour(hourStr string) float64 { //计算这个小时的碳排
+	APGL2, ok := getOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
 	if !ok {
 		return 0
 	}
-	AZ1, ok := getOpcFloatList("server.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
+	AZ1, ok := getOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
 	if !ok {
 		return 0
 	}
 	q23 := 0.0
 	for i := 1; i <= 4; i++ {
-		w, ok := getOpcFloatList("server.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		w, ok := getOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
 		if !ok {
 			continue
 		}
@@ -261,7 +262,7 @@ func energystationCarbonDay(hourStr string) float64 {
 		if utils.Zero(AZ1[i]) {
 			continue
 		}
-		r1 = i
+		r2 = i
 		break
 	}
 	q21 := 0.0
@@ -270,14 +271,61 @@ func energystationCarbonDay(hourStr string) float64 {
 		q21 = APGL2[r1] - APGL2[l1]
 	}
 	if l2 != -1 {
-		q21 = APGL2[r2] - APGL2[l2]
+		q21 = AZ1[r2] - AZ1[l2]
 	}
 	t := (q21 + q22 + q23/60) / 1000 * 0.604 //吨CO2
 	return t
 }
 
-func energystationCarbonWeek(dayStr string) float64 {
-	return 0
+func energystationCarbonDay(dayStr string) float64 { //计算当天的碳排
+	sum := 0.0
+	for i := 0; i < 24; i++ {
+		hourStr := fmt.Sprintf("%s %02d", dayStr, i)
+		var result defs.CalculationResultFloat
+		err = model.MongoResult.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}}).Decode(&result)
+		if err != nil {
+			ans := energystationCarbonHour(hourStr)
+			model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}, {"value", ans}})
+			sum += ans
+		} else {
+			sum += result.Value
+		}
+	}
+	return sum
+}
+
+func energyPayload(hourStr string) float64 {
+	q1 := 0.0
+	for i := 1; i <= 4; i++ {
+		Tout, ok := getOpcFloatList("ZLZ.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%87%BA%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际出水温度
+		if !ok {
+			continue
+		}
+		Tin, ok := getOpcFloatList("ZLZ.%E9%94%85%E7%82%89%E5%AE%9E%E9%99%85%E5%9B%9E%E6%B0%B4%E6%B8%A9%E5%BA%A6"+fmt.Sprint(i), hourStr) //锅炉实际回水温度
+		if !ok {
+			continue
+		}
+		Oa, ok := getOpcBoolList("ZLZ.A%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //A泵运行
+		if !ok {
+			continue
+		}
+		Ob, ok := getOpcBoolList("ZLZ.B%E6%B3%B5%E8%BF%90%E8%A1%8C"+fmt.Sprint(i), hourStr) //B泵运行
+		if !ok {
+			continue
+		}
+		minLen := utils.Min(len(Tout), len(Tin), len(Oa), len(Ob))
+		for j := 0; j < minLen; j++ {
+			if utils.Zero(Tout[j], Tin[j]) {
+				continue
+			}
+			q1 += (utils.Bool2Float(Oa[j]) + utils.Bool2Float(Ob[j])) * (Tout[j] - Tin[j])
+		}
+	}
+	// q1 *= 4.2 * 137 * 1e6 / 60
+	// q2 := 4 * 4 * 1e6 * 3600
+	q1 *= 2.3975
+	q2 := 14400.0
+	return q1 / q2
 }
 
 func Calc(tableName string, params interface{}) interface{} {
@@ -310,12 +358,17 @@ func Calc(tableName string, params interface{}) interface{} {
 	case "energystation_carbon_day":
 		p, ok := params.(string)
 		if ok {
-			return energystationCarbonDay(p)
+			return energystationCarbonHour(p) //表的名字是day，但是求的是小时的，下面同理
 		}
 	case "energystation_carbon_week":
 		p, ok := params.(string)
 		if ok {
-			return energystationCarbonWeek(p)
+			return energystationCarbonDay(p)
+		}
+	case "energy_pay_load":
+		p, ok := params.(string)
+		if ok {
+			return energyPayload(p)
 		}
 	}
 	return nil

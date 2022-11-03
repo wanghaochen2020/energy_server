@@ -18,14 +18,13 @@ var (
 	ok  bool
 )
 
-func getOpcDataList(c *gin.Context, tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天
-	// boiler_efficiency_day
+func getOpcDataList(tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天, 3-过去一年每月
 	var finalData [100]interface{}
 	lenFin := 0
 	// 根据当前时间查redis有无已计算好的数据
 	// now := time.Now().Local()
-	now, _ := time.Parse("2006/01/02 15:04:05", "2022/09/13 03:37:02")
-	timeStr := fmt.Sprintf("%d/%02d/%02d", now.Year(), now.Month(), now.Day()) //如果是近7天，在redis里面要存储近7天的值，但是在mongo里面只存储当天的值
+	now, _ := time.Parse("2006/01/02 15:04:05", "2022/10/13 15:31:00")
+	timeStr := fmt.Sprintf("%d/%02d/%02d", now.Year(), now.Month(), now.Day()) //如果是近7天，在redis里面要存储近7天的值，但是在mongo里面只存储当天的值，月同理
 	tNum := now.Hour()
 	if timeType == 1 {
 		timeStr = fmt.Sprintf("%s %02d", timeStr, now.Hour())
@@ -51,7 +50,7 @@ func getOpcDataList(c *gin.Context, tableName string, timeType int) []interface{
 			return finalData[:lenFin]
 		}
 	}
-	// redis没有，去mongo查当天前几个小时的数据
+	// redis没有，去mongo查
 	if timeType == 0 || timeType == 1 {
 		var result defs.CalculationResultFloatList
 		_ = model.MongoResult.FindOne(context.TODO(), bson.D{{"time", timeStr}, {"name", tableName}}).Decode(&result)
@@ -84,7 +83,7 @@ func getOpcDataList(c *gin.Context, tableName string, timeType int) []interface{
 		}
 	}
 
-	startTime := now.Add(-time.Hour * 24 * 6) //6天前
+	startTime := now.Add(-time.Hour * 24 * 7) //7天前
 	for i := 0; i <= tNum; i++ {
 		startTime = startTime.Add(time.Hour * 24)
 		newStr := fmt.Sprintf("%d/%02d/%02d", startTime.Year(), startTime.Month(), startTime.Day())
@@ -104,14 +103,14 @@ func getOpcDataList(c *gin.Context, tableName string, timeType int) []interface{
 			if needCalc[i] {
 				finalData[i] = calc.Calc(tableName, newStr)
 				model.MongoResult.DeleteOne(context.TODO(), bson.D{{"time", newStr}, {"name", tableName}})
-				model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", newStr}, {"name", tableName}, {"value", finalData}})
+				model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", newStr}, {"name", tableName}, {"value", finalData[i]}})
 			}
 		}
 	}
 	if timeType != 2 {
 		// 结果写入mongo
 		model.MongoResult.DeleteOne(context.TODO(), bson.D{{"time", timeStr}, {"name", tableName}})
-		model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", timeStr}, {"name", tableName}, {"value", finalData}})
+		model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", timeStr}, {"name", tableName}, {"value", finalData[:lenFin]}})
 	}
 	// 并存入redis
 	if lredis == tNum {
@@ -134,26 +133,68 @@ func GetPageData(c *gin.Context) {
 	switch page {
 	case "system-energy-station": //系统层-能源站
 		//设备在线率
-		dor := getOpcDataList(c, "device_online_rate_hour", 1)
+		dor := getOpcDataList("device_online_rate_hour", 1)
 		print(dor)
 		//锅炉总功率
-		bp := getOpcDataList(c, "boiler_power_hour", 1)
+		bp := getOpcDataList("boiler_power_hour", 1)
 		print(bp)
 	case "analyse-energy-station": //能效分析-能源站
 		// 电锅炉热效率
-		d11 := getOpcDataList(c, "boiler_efficiency_day", 0)
+		d11 := getOpcDataList("boiler_efficiency_day", 0)
 		print(d11)
 		// 蓄热水箱热效率
-		d12 := getOpcDataList(c, "watertank_efficiency_day", 0)
+		d12 := getOpcDataList("watertank_efficiency_day", 0)
 		print(d12)
 		// 总效率
-		d13 := getOpcDataList(c, "energystation_efficiency_day", 0)
+		d13 := getOpcDataList("energystation_efficiency_day", 0)
 		print(d13)
 		//日碳排
-		d21 := getOpcDataList(c, "energystation_carbon_day", 0)
+		d21 := getOpcDataList("energystation_carbon_day", 0)
 		print(d21)
 		//周碳排
-		d22 := getOpcDataList(c, "energystation_carbon_week", 2)
+		d22 := getOpcDataList("energystation_carbon_week", 2)
 		print(d22)
+	}
+}
+
+func GetTableData(c *gin.Context) {
+	table := c.Query("table")
+	switch table {
+	case "boiler_efficiency_day": // 电锅炉热效率
+		d := make([]map[string]interface{}, 3)
+
+		d[0] = make(map[string]interface{})
+		d[0]["name"] = "电锅炉"
+		d[0]["data"] = getOpcDataList("boiler_efficiency_day", 0)
+
+		d[1] = make(map[string]interface{})
+		d[1]["name"] = "蓄热水箱"
+		d[1]["data"] = getOpcDataList("watertank_efficiency_day", 0)
+
+		d[2] = make(map[string]interface{})
+		d[2]["name"] = "能源站系统"
+		d[2]["data"] = getOpcDataList("energystation_efficiency_day", 0)
+
+		c.JSON(200, d)
+	case "energystation_carbon_day": //碳排
+		d := make([]map[string]interface{}, 3)
+
+		d[0] = make(map[string]interface{})
+		d[0]["data"] = getOpcDataList("energystation_carbon_day", 0)
+
+		d[1] = make(map[string]interface{})
+		d[1]["data"] = getOpcDataList("energystation_carbon_week", 2)
+
+		d[2] = make(map[string]interface{})
+		d[2]["data"] = []float64{0}
+
+		c.JSON(200, d)
+	case "energy_pay_load": //负载率
+		d := make([]map[string]interface{}, 4)
+
+		d[0] = make(map[string]interface{})
+		d[0]["data"] = getOpcDataList("energy_pay_load", 0)
+
+		c.JSON(200, d)
 	}
 }
