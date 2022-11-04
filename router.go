@@ -39,8 +39,7 @@ func InitRouter() { //可以返回一个*gin.Engine
 		routes.LoginRouter(rPublic)
 
 		// 页面数据, 记得把路由放到token验证里
-		rPublic.GET("pageData", api.GetPageData)
-		rPublic.GET("tableData", api.GetTableData)
+		routes.EnergyStationRouter(rPublic)
 	}
 	// rAuth组内的路由需要有jwt的token
 	rAuth := r.Group("api")

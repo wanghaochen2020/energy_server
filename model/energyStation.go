@@ -1,9 +1,8 @@
-package calc
+package model
 
 import (
 	"context"
 	"energy/defs"
-	"energy/model"
 	"energy/utils"
 	"fmt"
 
@@ -14,10 +13,6 @@ type MinParam struct {
 	HourStr string
 	Min     int
 }
-
-var (
-	err error
-)
 
 func getFloat(val interface{}) (float64, bool) {
 	if val1, ok := val.(float64); ok {
@@ -34,7 +29,7 @@ func getFloat(val interface{}) (float64, bool) {
 
 func getOpcBoolList(itemid string, time string) ([]bool, bool) {
 	var opcData defs.OpcData
-	err := model.MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
 	if err != nil {
 		return nil, false
 	}
@@ -49,7 +44,7 @@ func getOpcBoolList(itemid string, time string) ([]bool, bool) {
 
 func getOpcFloatList(itemid string, time string) ([]float64, bool) {
 	var opcData defs.OpcData
-	err := model.MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
 	if err != nil {
 		return nil, false
 	}
@@ -198,7 +193,7 @@ func energystationEfficiency(hourStr string) float64 {
 }
 
 func deviceOnlineRate(minStr string) float64 {
-	// model.MongoOPC.Find()
+	// MongoOPC.Find()
 	return 0
 }
 
@@ -282,10 +277,10 @@ func energystationCarbonDay(dayStr string) float64 { //计算当天的碳排
 	for i := 0; i < 24; i++ {
 		hourStr := fmt.Sprintf("%s %02d", dayStr, i)
 		var result defs.CalculationResultFloat
-		err = model.MongoResult.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}}).Decode(&result)
+		err = MongoResult.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}}).Decode(&result)
 		if err != nil {
 			ans := energystationCarbonHour(hourStr)
-			model.MongoResult.InsertOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}, {"value", ans}})
+			MongoResult.InsertOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "energystation_carbon_week"}, {"value", ans}})
 			sum += ans
 		} else {
 			sum += result.Value
