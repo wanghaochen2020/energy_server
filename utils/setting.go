@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+
 	"gopkg.in/ini.v1"
 )
 
@@ -17,6 +18,15 @@ var (
 	DbUser     string // 数据库用户名
 	DbPassWord string // 数据库密码
 	DbName     string // 数据库表名
+
+	RedisHost     string // redis主机ip
+	RedisPort     string // redis端口
+	RedisPassWord string // redis密码
+	RedisDbNum    string // redis数据库号
+
+	MongoUrl string //Mongodb连接字符串
+
+	DeltaT int //计算服务的统计间隔
 )
 
 func init() {
@@ -41,4 +51,13 @@ func LoadData(file *ini.File) {
 	DbUser = file.Section("database").Key("DbUser").MustString("root")
 	DbPassWord = file.Section("database").Key("DbPassWord").MustString("Bupt@2021")
 	DbName = file.Section("database").Key("DbName").MustString("Energy")
+
+	RedisHost = file.Section("redis").Key("RedisHost").MustString("10.112.154.218")
+	RedisPort = file.Section("redis").Key("RedisPort").MustString("6379")
+	RedisPassWord = file.Section("redis").Key("RedisPassWord").MustString("123456")
+	RedisDbNum = file.Section("redis").Key("RedisDbNum").MustString("2")
+
+	MongoUrl = file.Section("mongodb").Key("MongoUrl").MustString("mongodb://admin:bupt2022@10.112.154.218:27017")
+
+	DeltaT = file.Section("calculator").Key("DeltaT").MustInt(1)
 }

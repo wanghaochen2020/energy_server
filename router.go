@@ -5,8 +5,9 @@ import (
 	"energy/middleware"
 	"energy/routes"
 	"energy/utils"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() { //可以返回一个*gin.Engine
@@ -36,6 +37,9 @@ func InitRouter() { //可以返回一个*gin.Engine
 	{
 		// 登录路由
 		routes.LoginRouter(rPublic)
+
+		// 页面数据, 记得把路由放到token验证里
+		routes.EnergyStationRouter(rPublic)
 	}
 	// rAuth组内的路由需要有jwt的token
 	rAuth := r.Group("api")
@@ -44,7 +48,6 @@ func InitRouter() { //可以返回一个*gin.Engine
 		// 验证token
 		rAuth.POST("userJwt", api.Verify)
 		// TODO 后续所有接口都在这里，验证token
-
 
 	}
 

@@ -1,18 +1,32 @@
 package model
 
 import (
+	"context"
 	"energy/utils"
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"time"
+
+	"github.com/go-redis/redis"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"os"
-	"time"
 )
 
-var db *gorm.DB
-var err error
+var (
+	db           *gorm.DB
+	err          error
+	RedisClient  *redis.Client
+	MongoClient  *mongo.Client
+	MongoOPC     *mongo.Collection
+	MongoOPCTime *mongo.Collection
+	MongoResult  *mongo.Collection
+)
 
 func InitDb() {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
@@ -49,4 +63,39 @@ func InitDb() {
 	sqlDB.SetMaxOpenConns(100)
 	// SetConnMaxLifetime 设置连接的最大可复用时间。
 	sqlDB.SetConnMaxLifetime(10 * time.Second)
+}
+
+func InitRedis() {
+	db, err := strconv.Atoi(utils.RedisDbNum)
+	if err != nil {
+		log.Panicf("Redis DB num is not int type: %s", err)
+	}
+	RedisClient = redis.NewClient(&redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", utils.RedisHost, utils.RedisPort),
+		Password: utils.RedisPassWord,
+		DB:       db,
+	})
+	_, err = RedisClient.Ping().Result()
+	if err != nil {
+		log.Panicf("Redis connection error: %s", err)
+	}
+}
+
+func InitMongo() {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	MongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(utils.MongoUrl))
+
+	if err != nil {
+		log.Panicf("MongoDB connection error: %s", err)
+	}
+
+	err = MongoClient.Ping(context.TODO(), nil)
+	if err != nil {
+		log.Panicf("MongoDB ping error: %s", err)
+	}
+
+	MongoOPC = MongoClient.Database("energy").Collection("opc_data")
+	MongoOPCTime = MongoClient.Database("energy").Collection("opc_update_time")
+	MongoResult = MongoClient.Database("energy").Collection("calculation_result")
 }
