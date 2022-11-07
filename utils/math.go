@@ -6,6 +6,19 @@ const INT_MAX = int(^uint(0) >> 1)
 
 const INT_MIN = ^INT_MAX
 
+func GetFloat(val interface{}) (float64, bool) {
+	if val1, ok := val.(float64); ok {
+		return val1, true
+	}
+	if val2, ok := val.(int32); ok {
+		return float64(val2), true
+	}
+	if val3, ok := val.(int64); ok {
+		return float64(val3), true
+	}
+	return 0, false
+}
+
 func Zero(nums ...float64) bool {
 	for _, v := range nums {
 		if math.Abs(v) < 1e-6 {

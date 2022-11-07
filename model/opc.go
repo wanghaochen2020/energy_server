@@ -3,12 +3,52 @@ package model
 import (
 	"context"
 	"energy/defs"
+	"energy/utils"
 	"fmt"
 	"strconv"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
+
+func GetResultFloat(name string, time string) (float64, bool) {
+	var result defs.CalculationResultFloat
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}, {"time", time}}).Decode(&result)
+	if err != nil {
+		return 0, false
+	}
+	return result.Value, true
+}
+
+func GetOpcBoolList(itemid string, time string) ([]bool, bool) {
+	var opcData defs.OpcData
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	if err != nil {
+		return nil, false
+	}
+	ans := []bool{}
+	for _, v := range opcData.Value {
+		val, _ := v.(bool) //失败的值视为0
+		ans = append(ans, val)
+	}
+	return ans, true
+
+}
+
+func GetOpcFloatList(itemid string, time string) ([]float64, bool) {
+	var opcData defs.OpcData
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	if err != nil {
+		return nil, false
+	}
+	ans := []float64{}
+	for _, v := range opcData.Value {
+		val, _ := utils.GetFloat(v) //失败的值视为0
+		ans = append(ans, val)
+	}
+	return ans, true
+
+}
 
 func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天, 3-过去一年每月
 	var finalData [100]interface{}
