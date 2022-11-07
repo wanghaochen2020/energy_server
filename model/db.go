@@ -27,6 +27,7 @@ var (
 	MongoOPCTime *mongo.Collection
 	MongoResult  *mongo.Collection
 )
+var Db *mongo.Database
 
 func InitDb() {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
@@ -85,7 +86,7 @@ func InitMongo() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	MongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(utils.MongoUrl))
-
+	Db = MongoClient.Database(utils.MongoName)
 	if err != nil {
 		log.Panicf("MongoDB connection error: %s", err)
 	}
