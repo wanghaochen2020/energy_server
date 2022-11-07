@@ -24,7 +24,8 @@ var (
 	RedisPassWord string // redis密码
 	RedisDbNum    string // redis数据库号
 
-	MongoUrl string //Mongodb连接字符串
+	MongoUrl  string //Mongodb连接字符串
+	MongoName string //Mongodb数据库名
 
 	DeltaT int //计算服务的统计间隔
 )
@@ -58,6 +59,7 @@ func LoadData(file *ini.File) {
 	RedisDbNum = file.Section("redis").Key("RedisDbNum").MustString("2")
 
 	MongoUrl = file.Section("mongodb").Key("MongoUrl").MustString("mongodb://admin:bupt2022@10.112.154.218:27017")
+	MongoName = file.Section("mongodb").Key("MongoName").MustString("energy")
 
 	DeltaT = file.Section("calculator").Key("DeltaT").MustInt(1)
 }
