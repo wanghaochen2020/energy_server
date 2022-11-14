@@ -40,7 +40,7 @@ energy
 ```json
 {
     "time": "2022/05/01",
-    "name": "boiler_efficiency_day",//name见redis的table_name表格
+    "name": "energy_boiler_efficiency_day",//name见redis的table_name表格
     "value": [0.9, 0.8, 0, 0.88]
 }
 ```
@@ -55,21 +55,37 @@ energy
 }
 ```
 
+#### loukong：楼控数据，在楼控原始数据基础上加上时间和表名
 
+```json
+{
+	"time": "2022/05/01 08",
+	"name": "heat",
+    "info": {}
+}
+```
+
+name目前有：heat：各组团热表；GA：太阳能热水
 
 ### redis文档
 
 使用db2，存储展示数据，命名为"2022/05/01 08 table_name"，前面表示本地时间的年月日时，table_name为表格名字
 
-| 表格                  | table_name                     | time精确到              | 值格式                                                  |
-| --------------------- | ------------------------------ | ----------------------- | ------------------------------------------------------- |
-| 电锅炉热效率          | boiler_efficiency_day          | 日（"2022/05/01"）      | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
-| 蓄热水箱效率          | watertank_efficiency_day       | 日                      | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
-| 能源站效率            | energystation_efficiency_day   | 日                      | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
-| 设备在线率（能源站）  | energystation_online_rate_hour | 小时（"2022/05/01 08"） | 长度为0到60的数组（根据记录值变化），如[0.9, 0.8, 0...] |
-| 锅炉总功率            | boiler_power_hour              | 小时                    | 长度为0到60的数组（根据记录值变化），如[100, 250, 0...] |
-| 能源站碳排放（当日）  | energystation_carbon_day       | 日                      | 长度为0到23的数组                                       |
-| 能源站碳排放（近7天） | energystation_carbon_week      | 近7天（"2022/05/01"）   | 长度为7的数组（mongo中只存当天的值）                    |
-| 能源站负载率          | energy_pay_load                | 日                      | 长度为0到23的数组                                       |
-|                       |                                |                         |                                                         |
+| 表格                           | table_name                      | time精确到            | 值格式                                                  |
+| ------------------------------ | ------------------------------- | --------------------- | ------------------------------------------------------- |
+| 能源站设备在线率               | energy_online_rate              | 无time，单值          | 一个浮点数                                              |
+| 能源站锅炉总功率               | energy_boiler_power             | 无time，单值          | 一个浮点数                                              |
+| 能源站锅炉运行台数             | energy_boiler_running_num       | 无time，单值          | 一个浮点数                                              |
+| 能源站电锅炉热效率             | energy_boiler_efficiency_day    | 日（"2022/05/01"）    | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
+| 能源站蓄热水箱效率             | energy_watertank_efficiency_day | 日                    | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
+| 能源站效率                     | energy_efficiency_day           | 日                    | 长度为0到23的数组（根据记录值变化），如[0.9, 0.8, 0...] |
+| 能源站碳排放（当日各小时）     | energy_carbon_day               | 日                    | 长度为0到23的数组                                       |
+| 能源站碳排放（近7天）          | energy_carbon_week              | 近7天（"2022/05/01"） | 长度为7的数组（mongo中只存当天的值，不存每周的）        |
+| 能源站碳排放（每月各天）       | energy_carbon_month             | 月（"2022/05"）       | 长度为最多31的数组                                      |
+| 能源站碳排放（每年各月）       | energy_carbon_year              | 年（"2022"）          | 长度为12的数组                                          |
+| 能源站锅炉负载率（当日各小时） | energy_boiler_payload_day       | 日                    | 长度为0到23的数组                                       |
+| 能源站锅炉负载率（近7天）      | energy_boiler_payload_week      | 近7天（"2022/05/01"） | 长度为7的数组（mongo中只存当天的值，不存每周的）        |
+| 能源站锅炉负载率（每月各天）   | energy_boiler_payload_month     | 月（"2022/05"）       | 长度为最多31的数组                                      |
+| 能源站锅炉负载率（每年各月）   | energy_boiler_payload_year      | 年（"2022"）          | 长度为12的数组                                          |
+|                                |                                 |                       |                                                         |
 

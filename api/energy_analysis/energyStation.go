@@ -1,11 +1,6 @@
 package energy_analysis
 
-import (
-	"energy/model"
-
-	"github.com/gin-gonic/gin"
-)
-
+/*
 func BoilerEfficiencyDay(c *gin.Context) {
 	d := make([]map[string]interface{}, 3)
 	d[0] = make(map[string]interface{})
@@ -46,3 +41,4 @@ func PayLoad(c *gin.Context) {
 
 	c.JSON(200, d)
 }
+*/

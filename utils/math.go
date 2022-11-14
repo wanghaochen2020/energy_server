@@ -36,6 +36,14 @@ func Bool2Float(b bool) float64 {
 	}
 }
 
+func Bool2Int(b bool) int {
+	if b {
+		return 1
+	} else {
+		return 0
+	}
+}
+
 func Max(nums ...int) int {
 	var ans int = INT_MIN
 	for _, v := range nums {

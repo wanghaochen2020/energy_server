@@ -4,9 +4,6 @@ import (
 	"context"
 	"energy/defs"
 	"energy/utils"
-	"fmt"
-	"strconv"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -50,6 +47,7 @@ func GetOpcFloatList(itemid string, time string) ([]float64, bool) {
 
 }
 
+/*
 func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天, 3-过去一年每月
 	var finalData [100]interface{}
 	lenFin := 0
@@ -158,4 +156,4 @@ func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 
 	}
 
 	return finalData[:lenFin]
-}
+}*/
