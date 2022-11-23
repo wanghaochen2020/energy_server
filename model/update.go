@@ -1,10 +1,13 @@
 package model
 
 import (
+	"context"
 	"energy/defs"
 	"fmt"
 	"log"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func loopTime(t time.Duration, callback func(time.Time)) {
@@ -29,13 +32,16 @@ func updateMonth(t time.Time) {
 	monthStr := fmt.Sprintf("%s/%02d", yearStr, month)
 	dayNum := t.Day()
 
-	data := CalcEnergyCarbonMonth(monthStr, dayNum)
+	data := CalcEnergyCarbonMonth(monthStr)
 	MongoUpdateList(yearStr, month, defs.EnergyCarbonYear, data)
 	data = CalcEnergyPayloadMonth(monthStr, dayNum)
 	MongoUpdateList(yearStr, month, defs.EnergyBoilerPayloadYear, data)
 
 	data = CalcColdCarbonMonth(monthStr, dayNum)
 	MongoUpdateList(yearStr, month, defs.ColdCarbonYear, data)
+
+	data = CalcSolarWaterHeatCollectionMonth(monthStr)
+	MongoUpdateList(yearStr, month, defs.SolarWaterHeatCollectionYear, data)
 }
 
 //更新本日的数据
@@ -49,8 +55,12 @@ func updateDay(t time.Time) {
 	data = CalcEnergyPayloadDay(dayStr) //能源站锅炉负载
 	MongoUpdateList(monthStr, day, defs.EnergyBoilerPayloadMonth, data)
 
-	data = CalcColdCarbonDay(dayStr) //能源站碳排
+	data = CalcColdCarbonDay(dayStr) //制冷站碳排
 	MongoUpdateList(monthStr, day, defs.ColdCarbonMonth, data)
+
+	//太阳能热水
+	data = CalcSolarWaterHeatCollectionDay(dayStr) //集热量
+	MongoUpdateList(monthStr, day, defs.SolarWaterHeatCollectionMonth, data)
 
 	if t.Add(time.Hour*24).Month() != t.Month() {
 		updateMonth(t)
@@ -96,10 +106,12 @@ func updateHour(t time.Time) {
 	MongoUpdateList(dayStr, hour, defs.PumpEHR2, dataList[1])
 
 	//太阳能热水
-	q1 = CalcSolarWaterHeatCollection(hourStr) //集热量
+	q1 = CalcSolarWaterHeatCollectionHour(hourStr) //集热量
 	MongoUpdateList(dayStr, hour, defs.SolarWaterHeatCollectionDay, q1)
 	data = CalcSolarWaterHeatEfficiency(t, q1) //集热效率
 	MongoUpdateList(dayStr, hour, defs.SolarWaterHeatEfficiencyDay, data)
+	q2 = CalcSolarWaterBoilerPowerConsumptionHour(hourStr) //电加热器耗电
+	MongoUpdateList(dayStr, hour, defs.SolarWaterBoilerPowerConsumptionHour, q2)
 
 	if hour == 23 {
 		updateDay(t)
@@ -112,6 +124,7 @@ func updateMinute(t time.Time) {
 	lastMinTime := t.Add(-time.Minute)
 	lastMin := lastMinTime.Minute()
 	lastMinHourStr := fmt.Sprintf("%04d/%02d/%02d %02d", lastMinTime.Year(), lastMinTime.Month(), lastMinTime.Day(), lastMinTime.Hour())
+	lastMinStr := fmt.Sprintf("%s:%02d", lastMinHourStr, lastMinTime.Minute())
 
 	data, _ := CalcEnergyOnlineRate(hourStr) //能源站设备在线率
 	MongoUpsertOne(defs.EnergyOnlineRate, data)
@@ -127,6 +140,28 @@ func updateMinute(t time.Time) {
 	//总供热量
 	//蓄放热量统计，正值蓄热，负值放热
 	//锅炉耗电量统计
+
+	//太阳能热水
+	var GAData defs.LouSolarWater
+	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "GA"}}).Decode(&GAData)
+	if err == nil {
+		q1 := CalcSolarWaterHeatCollectionMin(&GAData) //集热量
+		MongoUpdateList(lastMinHourStr, lastMin, defs.SolarWaterHeatCollectionHour, q1)
+		q2 := CalcSolarWaterBoilerPowerConsumptionMin(&GAData) //电加热器耗电
+		MongoUpdateList(lastMinHourStr, lastMin, defs.SolarWaterBoilerPowerConsumptionHour, q2)
+		data = CalcSolarWaterBoilerPowerConsumptionToday(t) //电加热器今日总耗电量
+		MongoUpsertOne(defs.SolarWaterBoilerPowerConsumptionToday, data)
+		data = CalcSolarWaterHeatCollecterInT(&GAData) //集热器进口温度
+		MongoUpsertOne(defs.SolarWaterHeatCollecterInT, data)
+		data = CalcSolarWaterHeatCollecterOutT(&GAData) //集热器出口温度
+		MongoUpsertOne(defs.SolarWaterHeatCollecterOutT, data)
+		data = CalcSolarWaterJRQT(&GAData) //锅炉温度
+		MongoUpsertOne(defs.SolarWaterJRQT, data)
+		data = CalcSolarWaterHeatCollectionToday(t) //今日总集热量
+		MongoUpsertOne(defs.SolarWaterHeatCollectionToday, data)
+		data = CalcSolarWaterPumpRunningNum(&GAData) //水泵运行数目
+		MongoUpsertOne(defs.SolarWaterPumpRunningNum, data)
+	}
 
 	if lastMinTime.Minute() == 59 {
 		updateHour(lastMinTime)

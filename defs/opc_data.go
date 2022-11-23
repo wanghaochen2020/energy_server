@@ -25,8 +25,19 @@ const (
 	PumpEHR1     = "pump_EHR1"      //二次泵站环路1每日EHR
 	PumpEHR2     = "pump_EHR2"      //二次泵站环路2每日EHR
 
-	SolarWaterHeatCollectionDay = "solar_water_heat_collection_day" //太阳能热水集热量
-	SolarWaterHeatEfficiencyDay = "solar_water_heat_efficiency_day" //太阳能热水集热效率
+	SolarWaterBoilerPowerConsumptionToday = "solar_water_boiler_power_comsumption_today" //太阳能热水电加热器今日总耗电量
+	SolarWaterHeatCollecterInT            = "solar_water_heat_collecter_in_temp"         //太阳能热水集热器进口温度
+	SolarWaterHeatCollecterOutT           = "solar_water_heat_collecter_out_temp"        //太阳能热水集热器出口温度
+	SolarWaterJRQT                        = "solar_water_JRQ_temp"                       //太阳能热水加热器温度
+	SolarWaterHeatCollectionToday         = "solar_water_heat_collection_today"          //太阳能热水今日总集热量
+	SolarWaterPumpRunningNum              = "solar_water_pump_running_num"               //太阳能热水水泵运行数目
+	SolarWaterHeatCollectionHour          = "solar_water_heat_collection_hour"           //太阳能热水集热量当小时每分钟
+	SolarWaterHeatCollectionDay           = "solar_water_heat_collection_day"            //太阳能热水集热量当日每小时
+	SolarWaterHeatCollectionMonth         = "solar_water_heat_collection_month"          //太阳能热水集热量每月各天总和
+	SolarWaterHeatCollectionYear          = "solar_water_heat_collection_year"           //太阳能热水集热量每年各月总和
+	SolarWaterBoilerPowerConsumptionHour  = "solar_water_boiler_power_comsumption_hour"  //太阳能热水电加热器耗电量当小时每分钟
+	SolarWaterBoilerPowerConsumptionDay   = "solar_water_boiler_power_comsumption_day"   //太阳能热水电加热器耗电量当日每小时
+	SolarWaterHeatEfficiencyDay           = "solar_water_heat_efficiency_day"            //太阳能热水集热效率当日每小时
 )
 
 //其它常数

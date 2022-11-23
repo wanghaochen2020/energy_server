@@ -41,15 +41,15 @@ func CalcEnergyPowerConsumptionToday(t time.Time) float64 {
 	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
 	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
 	ans := 0.0
-	cost, ok := GetOpcFloatList(defs.EnergyCarbonDay, dayStr)
+	cost, ok := GetResultFloatList(defs.EnergyCarbonDay, dayStr)
 	if ok {
 		minLen := utils.Min(len(cost), t.Hour())
 		for i := 0; i <= minLen; i++ {
 			ans += cost[i]
 		}
 	}
-	ans += CalcEnergyCarbonHour(hourStr)
-	ans *= 1000 / 0.604 //由tCO2换算到kW·h
+	ans += CalcEnergyCarbonHour(hourStr) //如果卡就删掉这一行，然后把这个函数做成一个小时调用一次
+	ans *= 1000 / 0.604                  //由tCO2换算到kW·h
 	return ans
 }
 
@@ -294,14 +294,14 @@ func CalcEnergyCarbonDay(dayStr string) float64 {
 }
 
 //计算本月的碳排
-func CalcEnergyCarbonMonth(monthStr string, maxDay int) float64 {
+func CalcEnergyCarbonMonth(monthStr string) float64 {
+	l, ok := GetResultFloatList(defs.EnergyCarbonMonth, monthStr)
+	if !ok {
+		return 0
+	}
 	sum := 0.0
-	for i := 1; i <= maxDay; i++ {
-		var result defs.CalculationResultFloat
-		err = MongoResult.FindOne(context.TODO(), bson.D{{"time", monthStr}, {"name", defs.EnergyCarbonMonth}}).Decode(&result)
-		if err == nil {
-			sum += result.Value
-		}
+	for _, v := range l {
+		sum += v
 	}
 	return sum
 }
@@ -328,16 +328,16 @@ func CalcEnergyPayloadDay(dayStr string) float64 {
 
 //计算本月的负载
 func CalcEnergyPayloadMonth(monthStr string, maxDay int) float64 {
-	sum := 0.0
-	for i := 1; i <= maxDay; i++ {
-		var result defs.CalculationResultFloat
-		err = MongoResult.FindOne(context.TODO(), bson.D{{"time", monthStr}, {"name", defs.EnergyBoilerPayloadMonth}}).Decode(&result)
-		if err == nil {
-			sum += result.Value
-		}
-	}
 	if maxDay == 0 {
 		return 0
+	}
+	l, ok := GetResultFloatList(defs.EnergyBoilerPayloadMonth, monthStr)
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	for _, v := range l {
+		sum += v
 	}
 	return sum / float64(maxDay)
 }
