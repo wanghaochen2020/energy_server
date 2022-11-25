@@ -6,6 +6,10 @@ const (
 	EnergyBoilerPower            = "energy_boiler_power"             //能源站锅炉功率
 	EnergyPowerConsumptionToday  = "energy_power_consumption_today"  //能源站今日总耗能
 	EnergyBoilerRunningNum       = "energy_boiler_running_num"       //能源站锅炉运行数目
+	EnergyTankRunningNum         = "energy_tank_running_num"         //能源站蓄热水箱运行数目
+	EnergyHeatSupplyToday        = "energy_heat_supply_today"        //能源站今日总供热量
+	EnergyHeatStorageAndRelease  = "energy_heat_storage_and_release" //能源站每日各小时水箱蓄放热量
+	EnergyBoilerEnergyCost       = "energy_boiler_energy_cost"       //能源站每日各小时锅炉能耗
 	EnergyBoilerEfficiencyDay    = "energy_boiler_efficiency_day"    //能源站每日各小时锅炉效率
 	EnergyWatertankEfficiencyDay = "energy_watertank_efficiency_day" //能源站每日各小时蓄热水箱效率
 	EnergyEfficiencyDay          = "energy_efficiency_day"           //能源站每日各小时效率
@@ -16,14 +20,24 @@ const (
 	EnergyBoilerPayloadMonth     = "energy_boiler_payload_month"     //能源站每月各天平均锅炉负载
 	EnergyBoilerPayloadYear      = "energy_boiler_payload_year"      //能源站每年各月平均锅炉负载
 
-	ColdPowerDay    = "cold_power_day"    //制冷中心每日各小时能耗
-	ColdCarbonDay   = "cold_carbon_day"   //制冷中心每日各小时碳排
-	ColdCarbonMonth = "cold_carbon_month" //制冷中心每月各天碳排总和
-	ColdCarbonYear  = "cold_carbon_year"  //制冷中心每年各月碳排总和
+	ColdPowerMin             = "cold_power_min"               //制冷中心当分钟功率
+	ColdEnergyCostToday      = "cold_energy_cost_today"       //制冷中心今日能耗
+	ColdMachineRunningNum    = "cold_machine_running_num"     //制冷中心制冷机运行台数
+	ColdCoolingWaterInT      = "cold_cooling_water_InT"       //制冷中心冷却水进水温度
+	ColdCoolingWaterOut      = "cold_cooling_water_OutT"      //制冷中心冷却水出水温度
+	ColdRefrigeratedWaterInT = "cold_refrigerated_water_InT"  //制冷中心冷冻水进水温度
+	ColdRefrigeratedWaterOut = "cold_refrigerated_water_OutT" //制冷中心冷冻水出水温度
+	ColdMachinePowerMin      = "cold_machine_power_min"       //制冷中心制冷机当分钟功率
+	ColdEnergyCostDay        = "cold_energy_cost_day"         //制冷中心每日各小时能耗
+	ColdCarbonDay            = "cold_carbon_day"              //制冷中心每日各小时碳排
+	ColdCarbonMonth          = "cold_carbon_month"            //制冷中心每月各天碳排总和
+	ColdCarbonYear           = "cold_carbon_year"             //制冷中心每年各月碳排总和
 
-	PumpPowerDay = "pump_power_day" //二次泵站每日各小时能耗
-	PumpEHR1     = "pump_EHR1"      //二次泵站环路1每日EHR
-	PumpEHR2     = "pump_EHR2"      //二次泵站环路2每日EHR
+	PumpPowerMin      = "pump_power_min"       //二次泵站功率
+	PumpPowerToday    = "pump_power_today"     //二次泵站今日能耗
+	PumpEnergyCostDay = "pump_energy_cost_day" //二次泵站每日各小时能耗
+	PumpEHR1          = "pump_EHR1"            //二次泵站环路1每日EHR
+	PumpEHR2          = "pump_EHR2"            //二次泵站环路2每日EHR
 
 	SolarWaterBoilerPowerConsumptionToday = "solar_water_boiler_power_comsumption_today" //太阳能热水电加热器今日总耗电量
 	SolarWaterHeatCollecterInT            = "solar_water_heat_collecter_in_temp"         //太阳能热水集热器进口温度
@@ -38,6 +52,7 @@ const (
 	SolarWaterBoilerPowerConsumptionHour  = "solar_water_boiler_power_comsumption_hour"  //太阳能热水电加热器耗电量当小时每分钟
 	SolarWaterBoilerPowerConsumptionDay   = "solar_water_boiler_power_comsumption_day"   //太阳能热水电加热器耗电量当日每小时
 	SolarWaterHeatEfficiencyDay           = "solar_water_heat_efficiency_day"            //太阳能热水集热效率当日每小时
+	SolarWaterGuaranteeRateDay            = "solar_water_guarantee_rate"                 //太阳能热水保证率当日每小时
 )
 
 //其它常数

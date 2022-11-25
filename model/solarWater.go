@@ -9,15 +9,15 @@ import (
 	"time"
 )
 
-//太阳能热水锅炉今日总耗能，每分钟
+// 太阳能热水锅炉今日总耗能，每分钟
 func CalcSolarWaterBoilerPowerConsumptionToday(t time.Time) float64 {
 	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
 	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
 	ans := 0.0
 	cost, ok := GetResultFloatList(defs.SolarWaterBoilerPowerConsumptionDay, dayStr)
 	if ok {
-		minLen := utils.Min(len(cost), t.Hour())
-		for i := 0; i <= minLen; i++ {
+		minLen := utils.Min(len(cost), t.Hour()+1)
+		for i := 0; i < minLen; i++ {
 			ans += cost[i]
 		}
 	}
@@ -49,15 +49,15 @@ func CalcSolarWaterJRQT(data *defs.LouSolarWater) float64 {
 	return ans
 }
 
-//太阳能热水今日总集热量，每分钟
+// 太阳能热水今日总集热量，每分钟
 func CalcSolarWaterHeatCollectionToday(t time.Time) float64 {
 	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
 	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
 	ans := 0.0
 	cost, ok := GetResultFloatList(defs.SolarWaterHeatCollectionDay, dayStr)
 	if ok {
-		minLen := utils.Min(len(cost), t.Hour())
-		for i := 0; i <= minLen; i++ {
+		minLen := utils.Min(len(cost), t.Hour()+1)
+		for i := 0; i < minLen; i++ {
 			ans += cost[i]
 		}
 	}
@@ -113,7 +113,7 @@ func CalcSolarWaterHeatCollectionHour(hourStr string) float64 {
 	return ans
 }
 
-//计算当天的集热
+// 计算当天的集热
 func CalcSolarWaterHeatCollectionDay(dayStr string) float64 {
 	l, ok := GetResultFloatList(defs.SolarWaterHeatCollectionDay, dayStr)
 	if !ok {
@@ -126,7 +126,7 @@ func CalcSolarWaterHeatCollectionDay(dayStr string) float64 {
 	return sum
 }
 
-//计算本月的集热
+// 计算本月的集热
 func CalcSolarWaterHeatCollectionMonth(monthStr string) float64 {
 	l, ok := GetResultFloatList(defs.SolarWaterHeatCollectionMonth, monthStr)
 	if !ok {
@@ -231,7 +231,7 @@ func CalcSolarWaterHeatEfficiency(t time.Time, heatCol float64) float64 {
 	return heatCol / I
 }
 
-func CalcSolarWaterHeatEfficiencyHour(q1 float64, q2 float64) float64 {
+func CalcSolarWaterGuaranteeRate(q1 float64, q2 float64) float64 {
 	if q1 == 0 && q2 == 0 {
 		return 0
 	}

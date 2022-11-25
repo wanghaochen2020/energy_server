@@ -56,6 +56,55 @@ func GetOpcFloatList(itemid string, time string) ([]float64, bool) {
 
 }
 
+func SumOpcResultList(tablename string, time string) float64 {
+	l, ok := GetResultFloatList(tablename, time)
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	for _, v := range l {
+		sum += v
+	}
+	return sum
+}
+
+func AvgOpcResultList(tablename string, time string) float64 {
+	l, ok := GetResultFloatList(tablename, time)
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	i := 0
+	for _, v := range l {
+		sum += v
+		i++
+	}
+	if i == 0 {
+		return 0
+	}
+	return sum / float64(i)
+}
+
+func RightSubLeft(l []float64) float64 {
+	left := 0
+	right := 0
+	for i := 0; i < len(l); i++ {
+		if utils.Zero(l[i]) {
+			continue
+		}
+		left = i
+		break
+	}
+	for i := len(l) - 1; i >= 0; i-- {
+		if utils.Zero(l[i]) {
+			continue
+		}
+		right = i
+		break
+	}
+	return l[right] - l[left]
+}
+
 /*
 func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天, 3-过去一年每月
 	var finalData [100]interface{}

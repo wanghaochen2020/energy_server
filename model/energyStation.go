@@ -15,7 +15,7 @@ type MinParam struct {
 	Min     int
 }
 
-//能源站在线率
+// 能源站在线率
 func CalcEnergyOnlineRate(hourStr string) (float64, bool) {
 	var result defs.MongoCountResult
 	command := bson.D{{"count", "opc_data"}, {"query", bson.D{{"time", hourStr}}}}
@@ -23,7 +23,7 @@ func CalcEnergyOnlineRate(hourStr string) (float64, bool) {
 	return float64(result.N) / 841, result.Ok
 }
 
-//能源站锅炉总功率
+// 能源站锅炉总功率
 func CalcEnergyBoilerPower(hourStr string, min int) float64 {
 	ans := 0.0
 	for i := 1; i <= 4; i++ {
@@ -36,15 +36,15 @@ func CalcEnergyBoilerPower(hourStr string, min int) float64 {
 	return ans
 }
 
-//能源站今日总耗能，每分钟
+// 能源站今日总耗能，每分钟
 func CalcEnergyPowerConsumptionToday(t time.Time) float64 {
 	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
 	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
 	ans := 0.0
 	cost, ok := GetResultFloatList(defs.EnergyCarbonDay, dayStr)
 	if ok {
-		minLen := utils.Min(len(cost), t.Hour())
-		for i := 0; i <= minLen; i++ {
+		minLen := utils.Min(len(cost), t.Hour()+1)
+		for i := 0; i < minLen; i++ {
 			ans += cost[i]
 		}
 	}
@@ -53,7 +53,7 @@ func CalcEnergyPowerConsumptionToday(t time.Time) float64 {
 	return ans
 }
 
-//能源站锅炉运行台数
+// 能源站锅炉运行台数
 func CalcEnergyBoilerRunningNum(hourStr string, min int) float64 {
 	ans := 0.0
 	for i := 1; i <= 4; i++ {
@@ -66,7 +66,88 @@ func CalcEnergyBoilerRunningNum(hourStr string, min int) float64 {
 	return ans
 }
 
-//电极锅炉供热量
+// 能源站蓄热水箱运行台数
+func CalcEnergyTankRunningNum(hourStr string, min int) float64 {
+	items := []string{"ZLZ.OPEN_V6", "ZLZ.OPEN_V7"}
+	ans := 0.0
+	for _, v := range items {
+		w, _ := GetOpcFloatList(v, hourStr) //运行状态
+		if len(w) < min {
+			continue
+		}
+		ans += w[min]
+	}
+	return ans
+}
+
+// 今日总供热量,如果卡就把这个函数做成一个小时调用一次
+func CalcEnergyHeatSupplyToday(t time.Time) float64 {
+	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
+	//从前往后查
+	q1 := 0.0
+	i0 := 0
+	for i0 = 0; i0 <= t.Hour(); i0++ {
+		l, ok := GetOpcFloatList("ZLZ.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", fmt.Sprintf("%s %02d", dayStr, i0)) //累计热量
+		if !ok {
+			continue
+		}
+		for _, v := range l {
+			if !utils.Zero(v) {
+				q1 = v
+				break
+			}
+		}
+		if !utils.Zero(q1) {
+			break
+		}
+	}
+	//从后往前查
+	q2 := 0.0
+	for i := t.Hour(); i >= i0; i-- {
+		l, ok := GetOpcFloatList("ZLZ.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", fmt.Sprintf("%s %02d", dayStr, i)) //累计热量
+		if !ok {
+			continue
+		}
+		ll := len(l)
+		for j := ll - 1; j >= 0; j-- {
+			if !utils.Zero(l[j]) {
+				q2 = l[j]
+				break
+			}
+		}
+		if !utils.Zero(q2) {
+			break
+		}
+	}
+	return q2 - q1
+}
+
+// 能源站每日各小时水箱蓄放热量(正值蓄热，负值放热)
+func CalcEnergyHeatStorageAndRelease(hourStr string) float64 {
+	l, ok := GetOpcFloatList("ZLZ.OUTPUT_P10", hourStr)
+	if !ok {
+		return 0
+	}
+	return RightSubLeft(l) * 100 * 4.2 * 1e3 //单位J
+}
+
+// 能源站锅炉能耗
+func CalcEnergyBoilerEnergyCost(hourStr string) float64 {
+	q2 := 0.0
+	for i := 1; i <= 4; i++ {
+		w, ok := GetOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
+		if !ok {
+			continue
+		}
+		minLen := len(w)
+		for j := 0; j < minLen; j++ {
+			q2 += w[j]
+		}
+	}
+	return q2
+}
+
+// 电极锅炉供热量
 func CalcEnergyBoilerHeatSupply(hourStr string) float64 {
 	q1 := 0.0
 	for i := 1; i <= 4; i++ {
@@ -98,27 +179,16 @@ func CalcEnergyBoilerHeatSupply(hourStr string) float64 {
 	return q1
 }
 
-//锅炉效率
-func CalcEnergyBoilerEfficiency(hourStr string, q1 float64) float64 {
-	q2 := 0.0
-	for i := 1; i <= 4; i++ {
-		w, ok := GetOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
-		if !ok {
-			continue
-		}
-		minLen := len(w)
-		for j := 0; j < minLen; j++ {
-			q2 += w[j]
-		}
-	}
-	q2 *= 60000 //功率单位kW
+// 锅炉效率
+func CalcEnergyBoilerEfficiency(q1 float64, q2 float64) float64 {
+	q2 *= 3600000 //单位kW->J
 	if q2 == 0 {
 		return 0
 	}
 	return q1 / q2
 }
 
-//水箱效率
+// 水箱效率
 func CalcWatertankEfficiency(hourStr string) float64 {
 	q1 := 0.0
 	var Tinitial float64
@@ -161,7 +231,7 @@ func CalcWatertankEfficiency(hourStr string) float64 {
 	return q1 / q2
 }
 
-//能源站效率
+// 能源站效率
 func CalcEnergyEfficiency(hourStr string) float64 {
 	totalQ1, ok := GetOpcFloatList("ZLZ.RLB_%E7%B4%AF%E8%AE%A1%E7%83%AD%E9%87%8F", hourStr) //RLB_累计热量
 	if !ok {
@@ -214,7 +284,7 @@ func CalcEnergyEfficiency(hourStr string) float64 {
 	return q1 / q2
 }
 
-//计算这个小时的碳排
+// 计算这个小时的碳排
 func CalcEnergyCarbonHour(hourStr string) float64 {
 	APGL2, ok := GetOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
 	if !ok {
@@ -279,65 +349,28 @@ func CalcEnergyCarbonHour(hourStr string) float64 {
 	return t
 }
 
-//计算当天的碳排
+// 计算当天的碳排
 func CalcEnergyCarbonDay(dayStr string) float64 {
-	sum := 0.0
-	for i := 0; i < 24; i++ {
-		hourStr := fmt.Sprintf("%s %02d", dayStr, i)
-		var result defs.CalculationResultFloat
-		err = MongoResult.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", defs.EnergyCarbonDay}}).Decode(&result)
-		if err == nil {
-			sum += result.Value
-		}
-	}
-	return sum
+	return SumOpcResultList(defs.EnergyCarbonDay, dayStr)
 }
 
-//计算本月的碳排
+// 计算本月的碳排
 func CalcEnergyCarbonMonth(monthStr string) float64 {
-	l, ok := GetResultFloatList(defs.EnergyCarbonMonth, monthStr)
-	if !ok {
-		return 0
-	}
-	sum := 0.0
-	for _, v := range l {
-		sum += v
-	}
-	return sum
+	return SumOpcResultList(defs.EnergyCarbonMonth, monthStr)
 }
 
-//能源站该小时锅炉产热对应的负载
+// 能源站该小时锅炉产热对应的负载
 func CalcEnergyPayloadHour(q1 float64) float64 {
 	q2 := 4 * 4 * 1e6 * 3600
 	return q1 / q2
 }
 
-//计算当天的负载
+// 计算当天的负载
 func CalcEnergyPayloadDay(dayStr string) float64 {
-	sum := 0.0
-	for i := 0; i < 24; i++ {
-		hourStr := fmt.Sprintf("%s %02d", dayStr, i)
-		var result defs.CalculationResultFloat
-		err = MongoResult.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", defs.EnergyBoilerPayloadDay}}).Decode(&result)
-		if err == nil {
-			sum += result.Value
-		}
-	}
-	return sum / 24
+	return AvgOpcResultList(defs.EnergyBoilerPayloadDay, dayStr)
 }
 
-//计算本月的负载
-func CalcEnergyPayloadMonth(monthStr string, maxDay int) float64 {
-	if maxDay == 0 {
-		return 0
-	}
-	l, ok := GetResultFloatList(defs.EnergyBoilerPayloadMonth, monthStr)
-	if !ok {
-		return 0
-	}
-	sum := 0.0
-	for _, v := range l {
-		sum += v
-	}
-	return sum / float64(maxDay)
+// 计算本月的负载
+func CalcEnergyPayloadMonth(monthStr string) float64 {
+	return AvgOpcResultList(defs.EnergyBoilerPayloadMonth, monthStr)
 }
