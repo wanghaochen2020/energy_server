@@ -92,10 +92,10 @@ func CalcSolarWaterHeatCollectionMin(data *defs.LouSolarWater) float64 {
 		return 0
 	}
 	V := 0.0 //流量
-	if data.JRPump_1.Sta != "1" {
+	if data.JRPump_1.Sta == "1" {
 		V += 0.5 //集热循环泵流量（注意这里时间差为分钟）
 	}
-	if data.JRPump_2.Sta != "1" {
+	if data.JRPump_2.Sta == "1" {
 		V += 0.5 //集热循环泵流量
 	}
 	return (HT - LT) * V * 4200000 //单位为J
@@ -201,7 +201,7 @@ func CalcSolarWaterBoilerPowerConsumptionMin(data *defs.LouSolarWater) float64 {
 	if data.Heater_4_5.Sta == "1" {
 		ans++
 	}
-	ans *= 90 / 60 //单位kW·h，单个加热器功率90kW
+	ans *= 90.0 / 60 //单位kW·h，单个加热器功率90kW
 	return ans
 }
 
@@ -219,7 +219,7 @@ func CalcSolarWaterBoilerPowerConsumptionHour(hourStr string) float64 {
 
 func CalcSolarWaterHeatEfficiency(t time.Time, heatCol float64) float64 {
 	I0 := []float64{0, 1405, 1394, 1378, 1353, 1334, 1316, 1308, 1315, 1330, 1350, 1372, 1392}
-	p := 0.5                     //从数据库中拿到p，这个是临时的
+	p := 0.8                     //从数据库中拿到p，这个是临时的
 	phi := 40.52 / 180 * math.Pi //纬度
 	delta := 23.45 * math.Sin(2.0*math.Pi*(284+float64(t.Day()))/365) / 180 * math.Pi
 	omiga := float64(t.Hour()-12) * 15 / 180 * math.Pi

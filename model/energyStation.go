@@ -124,11 +124,50 @@ func CalcEnergyHeatSupplyToday(t time.Time) float64 {
 
 // 能源站每日各小时水箱蓄放热量(正值蓄热，负值放热)
 func CalcEnergyHeatStorageAndRelease(hourStr string) float64 {
-	l, ok := GetOpcFloatList("ZLZ.OUTPUT_P10", hourStr)
-	if !ok {
+	//通过小时初末的水箱（温度差*体积*密度*比热容）得出，体积变化不大视为定值（北建大意见）
+	t1 := make([][]float64, 11)
+	ok1 := make([]bool, 11)
+	maxLen := 0
+	for i := 0; i < 11; i++ {
+		t1[i], ok1[i] = GetOpcFloatList(fmt.Sprintf("ZLZ.T1_%d", i+1), hourStr)
+		maxLen = utils.Max(maxLen, len(t1[i]))
+	}
+	left := 0
+	leftTemp := 0.0
+	for left = 0; left < maxLen; left++ {
+		leftTempNum := 0
+		for i := 0; i < 11; i++ {
+			if !ok1[i] || len(t1[i]) <= left || t1[i][left] == 0 {
+				continue
+			}
+			leftTemp += t1[i][left]
+			leftTempNum++
+		}
+		if leftTempNum != 0 {
+			leftTemp /= float64(leftTempNum)
+			break
+		}
+	}
+	right := 0
+	rightTemp := 0.0
+	for right = maxLen; right > left; right-- {
+		rightTempNum := 0
+		for i := 0; i < 11; i++ {
+			if !ok1[i] || len(t1[i]) <= right || t1[i][right] == 0 {
+				continue
+			}
+			rightTemp += t1[i][left]
+			rightTempNum++
+		}
+		if rightTempNum != 0 {
+			rightTemp /= float64(rightTempNum)
+			break
+		}
+	}
+	if right == left {
 		return 0
 	}
-	return RightSubLeft(l) * 100 * 4.2 * 1e3 //单位J
+	return (rightTemp - leftTemp) * 5.6 * 100 * 1e3 * 4.2 * 1e3 //单位J
 }
 
 // 能源站锅炉能耗
@@ -189,42 +228,28 @@ func CalcEnergyBoilerEfficiency(q1 float64, q2 float64) float64 {
 }
 
 // 水箱效率
-func CalcWatertankEfficiency(hourStr string) float64 {
-	q1 := 0.0
-	var Tinitial float64
+func CalcWatertankEfficiency(q1 float64, hourStr string) float64 {
+	Tinitial := 0.0
 	Taver := 0.0
-	h, ok := GetOpcFloatList("ZLZ.OUTPUT_P10", hourStr)
+	Tout, ok := GetOpcFloatList("ZLZ.OUTPUT_T3", hourStr) //供水温度
 	if !ok {
 		return 0
 	}
-	Tin, ok := GetOpcFloatList("ZLZ.OUTPUT_T3", hourStr)
-	if !ok {
-		return 0
-	}
-	Tout, ok := GetOpcFloatList("ZLZ.OUTPUT_T4", hourStr)
-	if !ok {
-		return 0
-	}
-	minLen := utils.Min(len(h), len(Tin), len(Tout))
-	if minLen == 0 {
-		return 0
-	}
-	if utils.Zero(Tin[0]) {
-		return 0
-	}
-	Tinitial = Tin[0]
-	Taver = Tinitial
-	averCount := 1
-	for i := 1; i < minLen; i++ {
-		if utils.Zero(h[i], h[i-1], Tin[i], Tout[i]) {
-			continue
+	averCount := 0
+	for _, t := range Tout {
+		if !utils.Zero(t) {
+			if utils.Zero(Tinitial) {
+				Tinitial = t
+			}
+			Taver += t
+			averCount++
 		}
-		q1 += ((h[i]-h[i-1])*100 + 0*0 /*预留给小水箱的位置，目前未得到相关数据*/) * (Tin[i] - Tout[i])
-		Taver += Tin[i]
-		averCount++
+	}
+	if averCount == 0 {
+		return 0
 	}
 	Taver /= float64(averCount)
-	q2 := (Taver - Tinitial) * 1055
+	q2 := (Taver - Tinitial) * 5.6 * 100 * 1e3 * 4.2 * 1e3
 	if q2 == 0 {
 		return 0
 	}
@@ -343,7 +368,7 @@ func CalcEnergyCarbonHour(hourStr string) float64 {
 		q21 = APGL2[r1] - APGL2[l1]
 	}
 	if l2 != -1 {
-		q21 = AZ1[r2] - AZ1[l2]
+		q22 = AZ1[r2] - AZ1[l2]
 	}
 	t := (q21 + q22 + q23/60) / 1000 * 0.604 //吨CO2
 	return t

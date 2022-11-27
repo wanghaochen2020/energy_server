@@ -1,14 +1,11 @@
 package model
 
 import (
-	"context"
 	"energy/defs"
 	"energy/utils"
 	"fmt"
 	"strconv"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // 总功率(kW)
@@ -67,11 +64,8 @@ func CalcPumpEnergyCostHour(hourStr string) float64 {
 	return ans
 }
 
-// 输热比。目前共有2个环路：环路0(D1、D2组团)；环路1(D3~D6组团)
-func CalcPumpEHR(hourStr string) []float64 {
-	powerStr := [][]string{
-		{"ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_1", "ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_2"},
-		{"ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS3_1", "ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS3_2"}}
+// 通过楼控数据计算当小时每分钟各环路输热量，用于计算输热比。目前共有2个环路：环路0(D1、D2组团)；环路1(D3~D6组团)
+func CalcPumpHeat(data *defs.LouHeatList) []float64 {
 	heatMap := map[string]int{
 		"D1组团能量表": 0,
 		"D2组团能量表": 0,
@@ -81,22 +75,7 @@ func CalcPumpEHR(hourStr string) []float64 {
 		"D6组团能量表": 1,
 	}
 	const L = 2
-	var power [L]float64
 	var heat [L]float64
-	var data defs.LouHeatList
-	for i := 0; i < L; i++ {
-		for j := 0; j < len(powerStr[i]); j++ {
-			l, ok := GetOpcFloatList(powerStr[i][j], hourStr)
-			if ok {
-				power[i] += RightSubLeft(l)
-			}
-		}
-	}
-
-	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", hourStr}, {"name", "heat"}}).Decode(&data)
-	if err != nil {
-		return []float64{0, 0}
-	}
 	for _, v := range data.Info {
 		if v.Status != "0" {
 			continue
@@ -113,8 +92,30 @@ func CalcPumpEHR(hourStr string) []float64 {
 		if err != nil {
 			continue
 		}
-		heat[heatMap[v.Name]] += (inT - OutT) * CF * 4200000 //单位为J
+		heat[heatMap[v.Name]] += (inT - OutT) * CF * 4200000 / 60 //单位为J
 	}
+	return heat[:]
+}
+
+// 输热比
+func CalcPumpEHR(hourStr string) []float64 {
+	powerStr := [][]string{
+		{"ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_1", "ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_2"},
+		{"ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS3_1", "ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS3_2"}}
+	const L = 2
+	var power [L]float64
+	var heat [L]float64
+	for i := 0; i < L; i++ {
+		for j := 0; j < len(powerStr[i]); j++ {
+			l, ok := GetOpcFloatList(powerStr[i][j], hourStr)
+			if ok {
+				power[i] += RightSubLeft(l)
+			}
+		}
+	}
+	heat[0] = SumOpcResultList(defs.PumpHeatHour1, hourStr)
+	heat[1] = SumOpcResultList(defs.PumpHeatHour2, hourStr)
+
 	for i := 0; i < L; i++ {
 		if utils.Zero(heat[i]) {
 			power[i] = 0

@@ -1,5 +1,7 @@
-time="2022-10-31T21:52:05+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=259 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=energystation_carbon_day" SpendTime="620 ms" Status=200
-time="2022-10-31T21:53:28+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=59 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=energy_pay_load" SpendTime="76319 ms" Status=200
+time="2022-11-27T17:24:36+08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=36 HostName=DESKTOP-PEDI4N3 Ip="::1" Method=GET Path="/api/update_history_data?tstart=2022/10/09%2017:15&tend=2022/10/13%2015:26" SpendTime="1 ms" Status=202
+02
+
++08:00" level=info Agent=PostmanRuntime/7.29.2 DataSize=59 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=energy_pay_load" SpendTime="76319 ms" Status=200
 SKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=boiler_efficiency_day" SpendTime="20741 ms" Status=200
 time="2022-10-31T21:09:14+08:00" level=info Agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.26" DataSize=196 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=boiler_efficiency_day" SpendTime="5951 ms" Status=200
 time="2022-10-31T21:09:14+08:00" level=info Agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.26" DataSize=196 HostName=DESKTOP-4J1C0JS Ip=127.0.0.1 Method=GET Path="/api/tableData?table=boiler_efficiency_day" SpendTime="12 ms" Status=200

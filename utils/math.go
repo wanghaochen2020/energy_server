@@ -28,6 +28,15 @@ func Zero(nums ...float64) bool {
 	return false
 }
 
+func ZeroList(l []float64) bool {
+	for _, v := range l {
+		if math.Abs(v) < 1e-6 {
+			return true
+		}
+	}
+	return false
+}
+
 func Bool2Float(b bool) float64 {
 	if b {
 		return 1.0

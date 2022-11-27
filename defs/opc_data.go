@@ -36,6 +36,8 @@ const (
 	PumpPowerMin      = "pump_power_min"       //二次泵站功率
 	PumpPowerToday    = "pump_power_today"     //二次泵站今日能耗
 	PumpEnergyCostDay = "pump_energy_cost_day" //二次泵站每日各小时能耗
+	PumpHeatHour1     = "pump_heat_hour1"      //二次泵站当小三每分钟环路1输热量
+	PumpHeatHour2     = "pump_heat_hour2"      //二次泵站当小三每分钟环路2输热量
 	PumpEHR1          = "pump_EHR1"            //二次泵站环路1每日EHR
 	PumpEHR2          = "pump_EHR2"            //二次泵站环路2每日EHR
 

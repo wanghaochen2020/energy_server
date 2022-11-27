@@ -11,7 +11,7 @@ func main() {
 	model.InitMongo()
 	//model.LoopQueryUpdate()
 	//引用路由组件
-	//InitRouter()
+	InitRouter()
 }
 
 /*

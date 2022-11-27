@@ -1,4 +1,5 @@
 package errmsg
+
 // TODO 修改错误类型
 const (
 	SUCCESS = 200

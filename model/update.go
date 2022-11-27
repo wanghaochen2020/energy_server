@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func loopTime(t time.Duration, callback func(time.Time)) {
+func loopTime(t time.Duration, callback func(time.Time, bool)) {
 	if t == 0 {
 		return
 	}
@@ -21,7 +21,7 @@ func loopTime(t time.Duration, callback func(time.Time)) {
 		next := now.Add(deltaT)
 		time.Sleep(deltaT) //前往下一个整点
 
-		go callback(next)
+		go callback(next, true)
 	}
 }
 
@@ -73,14 +73,14 @@ func updateHour(t time.Time) {
 	hourStr := fmt.Sprintf("%s %02d", dayStr, hour)
 	var data float64
 
-	data = CalcEnergyHeatStorageAndRelease(hourStr) //蓄放热量统计，正值蓄热，负值放热
+	q3 := CalcEnergyHeatStorageAndRelease(hourStr) //蓄放热量统计，正值蓄热，负值放热
 	MongoUpdateList(dayStr, hour, defs.EnergyHeatStorageAndRelease, data)
 	q1 := CalcEnergyBoilerHeatSupply(hourStr) //能源站锅炉供热量
 	q2 := CalcEnergyBoilerEnergyCost(hourStr) //锅炉能耗(单位kW·h)
 	MongoUpdateList(dayStr, hour, defs.EnergyBoilerEnergyCost, q2)
 	data = CalcEnergyBoilerEfficiency(q1, q2) //能源站锅炉效率
 	MongoUpdateList(dayStr, hour, defs.EnergyBoilerEfficiencyDay, data)
-	data = CalcWatertankEfficiency(hourStr) //能源站蓄热水箱效率
+	data = CalcWatertankEfficiency(q3, hourStr) //能源站蓄热水箱效率
 	MongoUpdateList(dayStr, hour, defs.EnergyWatertankEfficiencyDay, data)
 	data = CalcEnergyEfficiency(hourStr) //能源站效率
 	MongoUpdateList(dayStr, hour, defs.EnergyEfficiencyDay, data)
@@ -92,7 +92,7 @@ func updateHour(t time.Time) {
 	//制冷中心
 	q1 = CalcColdEnergyCost(hourStr, defs.ColdMachine1)
 	q2 = CalcColdEnergyCost(hourStr, defs.ColdMachine2)
-	q3 := CalcColdEnergyCost(hourStr, defs.ColdMachine3)
+	q3 = CalcColdEnergyCost(hourStr, defs.ColdMachine3)
 	q := q1 + q2 + q3
 	MongoUpdateList(dayStr, hour, defs.ColdEnergyCostDay, q) //耗能
 	//制冷效率（流量没拿到）
@@ -123,80 +123,101 @@ func updateHour(t time.Time) {
 	}
 }
 
-// 更新本分钟和上一分钟的数据
-func updateMinute(t time.Time) {
-	hourStr := fmt.Sprintf("%04d/%02d/%02d %02d", t.Year(), t.Month(), t.Day(), t.Hour())
+// 更新上一分钟的数据。如果仅仅是导入过去数据upsert设为false，需要更新页面设为true
+func updateMinute(t time.Time, upsert bool) {
 	lastMinTime := t.Add(-time.Minute)
 	lastMin := lastMinTime.Minute()
 	lastMinHourStr := fmt.Sprintf("%04d/%02d/%02d %02d", lastMinTime.Year(), lastMinTime.Month(), lastMinTime.Day(), lastMinTime.Hour())
-	lastMinStr := fmt.Sprintf("%s:%02d", lastMinHourStr, lastMinTime.Minute())
+	// lastMinStr := fmt.Sprintf("%s:%02d", lastMinHourStr, lastMinTime.Minute())
+	var data float64
 
-	//能源站
-	data, _ := CalcEnergyOnlineRate(hourStr) //能源站设备在线率
-	MongoUpsertOne(defs.EnergyOnlineRate, data)
-	data = CalcEnergyBoilerPower(lastMinHourStr, lastMin) //能源站锅炉总功率
-	MongoUpsertOne(defs.EnergyBoilerPower, data)
-	data = CalcEnergyPowerConsumptionToday(lastMinTime) //能源站今日能耗
-	MongoUpsertOne(defs.EnergyPowerConsumptionToday, data)
-	data = CalcEnergyBoilerRunningNum(lastMinHourStr, lastMin) //能源站锅炉运行数目
-	MongoUpsertOne(defs.EnergyBoilerRunningNum, data)
-	data = CalcEnergyTankRunningNum(lastMinHourStr, lastMin) //蓄热水箱运行台数
-	MongoUpsertOne(defs.EnergyTankRunningNum, data)
+	//之后计算要用的数据
 
-	//设备温度(无)
-	//设备供热量（无）
-
-	data = CalcEnergyHeatSupplyToday(t) //总供热量
-	MongoUpsertOne(defs.EnergyHeatSupplyToday, data)
-
-	//制冷中心
-	q1 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine1)
-	q2 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine2)
-	q3 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine3)
-	q4 := CalcColdCabinetPower(lastMinHourStr, lastMin)
-	data = q1 + q2 + q3 + q4 //总功率
-	MongoUpsertOne(defs.ColdPowerMin, data)
-	data = q1 + q2 + q3 //制冷机功率
-	MongoUpsertOne(defs.ColdMachinePowerMin, data)
-	data = CalcColdEnergyCostToday(lastMinTime) //今日耗能
-	MongoUpsertOne(defs.ColdEnergyCostToday, data)
-	data = CalcColdMachineRunningNum(lastMinHourStr, lastMin) //制冷机运行数目
-	MongoUpsertOne(defs.ColdMachineRunningNum, data)
-	data = CalcColdCoolingWaterInT(lastMinHourStr, lastMin) //冷却进水温度
-	MongoUpsertOne(defs.ColdCoolingWaterInT, data)
-	data = CalcColdCoolingWaterOutT(lastMinHourStr, lastMin) //冷却出水温度
-	MongoUpsertOne(defs.ColdCoolingWaterOut, data)
-	data = CalcColdRefrigeratedWaterInT(lastMinHourStr, lastMin) //冷冻进水温度
-	MongoUpsertOne(defs.ColdRefrigeratedWaterInT, data)
-	data = CalcColdRefrigeratedWaterOutT(lastMinHourStr, lastMin) //冷冻出水温度
-	MongoUpsertOne(defs.ColdRefrigeratedWaterOut, data)
-
+	exampleTime := "2022/05/01 08:05"
 	//二次泵站
-	data = CalcPumpPowerMin(lastMinHourStr, lastMin) //总功率
-	MongoUpsertOne(defs.PumpPowerMin, data)
-	data = CalcPumpEnergyCostToday(lastMinTime) //今日耗电量
-	MongoUpsertOne(defs.PumpPowerToday, data)
+	var HeatData defs.LouHeatList
+	// err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "heat"}}).Decode(&HeatData)
+	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "heat"}}).Decode(&HeatData)
+	if err == nil {
+		dataList := CalcPumpHeat(&HeatData) //统计输热量
+		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour1, dataList[0])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour2, dataList[1])
+	}
 
 	//太阳能热水
-	var GAData defs.LouSolarWater
-	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "GA"}}).Decode(&GAData)
-	if err == nil {
-		data = CalcSolarWaterBoilerPowerConsumptionToday(t) //电加热器今日总耗电量
-		MongoUpsertOne(defs.SolarWaterBoilerPowerConsumptionToday, data)
-		data = CalcSolarWaterHeatCollecterInT(&GAData) //集热器进口温度
-		MongoUpsertOne(defs.SolarWaterHeatCollecterInT, data)
-		data = CalcSolarWaterHeatCollecterOutT(&GAData) //集热器出口温度
-		MongoUpsertOne(defs.SolarWaterHeatCollecterOutT, data)
-		data = CalcSolarWaterJRQT(&GAData) //锅炉温度
-		MongoUpsertOne(defs.SolarWaterJRQT, data)
-		data = CalcSolarWaterHeatCollectionMin(&GAData) //集热量
+	var GAData defs.LouSolarWaterList
+	// GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "GA"}}).Decode(&GAData)
+	GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "GA"}}).Decode(&GAData)
+	if GAerr == nil {
+		data = CalcSolarWaterHeatCollectionMin(&GAData.Info) //集热量
 		MongoUpdateList(lastMinHourStr, lastMin, defs.SolarWaterHeatCollectionHour, data)
-		data = CalcSolarWaterHeatCollectionToday(t) //今日总集热量
-		MongoUpsertOne(defs.SolarWaterHeatCollectionToday, data)
-		data = CalcSolarWaterPumpRunningNum(&GAData) //水泵运行数目
-		MongoUpsertOne(defs.SolarWaterPumpRunningNum, data)
-		data = CalcSolarWaterBoilerPowerConsumptionMin(&GAData) //电加热器耗电
+		data = CalcSolarWaterBoilerPowerConsumptionMin(&GAData.Info) //电加热器耗电
 		MongoUpdateList(lastMinHourStr, lastMin, defs.SolarWaterBoilerPowerConsumptionHour, data)
+	}
+
+	//实时展示数据
+	if upsert {
+		//能源站
+		data, _ = CalcEnergyOnlineRate(lastMinHourStr) //能源站设备在线率
+		MongoUpsertOne(defs.EnergyOnlineRate, data)
+		data = CalcEnergyBoilerPower(lastMinHourStr, lastMin) //能源站锅炉总功率
+		MongoUpsertOne(defs.EnergyBoilerPower, data)
+		data = CalcEnergyPowerConsumptionToday(lastMinTime) //能源站今日能耗
+		MongoUpsertOne(defs.EnergyPowerConsumptionToday, data)
+		data = CalcEnergyBoilerRunningNum(lastMinHourStr, lastMin) //能源站锅炉运行数目
+		MongoUpsertOne(defs.EnergyBoilerRunningNum, data)
+		data = CalcEnergyTankRunningNum(lastMinHourStr, lastMin) //蓄热水箱运行台数
+		MongoUpsertOne(defs.EnergyTankRunningNum, data)
+
+		//设备温度(无)
+		//设备供热量（无）
+
+		data = CalcEnergyHeatSupplyToday(t) //总供热量
+		MongoUpsertOne(defs.EnergyHeatSupplyToday, data)
+
+		//制冷中心
+		q1 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine1)
+		q2 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine2)
+		q3 := CalcColdMachinePower(lastMinHourStr, lastMin, defs.ColdMachine3)
+		q4 := CalcColdCabinetPower(lastMinHourStr, lastMin)
+		data = q1 + q2 + q3 + q4 //总功率
+		MongoUpsertOne(defs.ColdPowerMin, data)
+		data = q1 + q2 + q3 //制冷机功率
+		MongoUpsertOne(defs.ColdMachinePowerMin, data)
+		data = CalcColdEnergyCostToday(lastMinTime) //今日耗能
+		MongoUpsertOne(defs.ColdEnergyCostToday, data)
+		data = CalcColdMachineRunningNum(lastMinHourStr, lastMin) //制冷机运行数目
+		MongoUpsertOne(defs.ColdMachineRunningNum, data)
+		data = CalcColdCoolingWaterInT(lastMinHourStr, lastMin) //冷却进水温度
+		MongoUpsertOne(defs.ColdCoolingWaterInT, data)
+		data = CalcColdCoolingWaterOutT(lastMinHourStr, lastMin) //冷却出水温度
+		MongoUpsertOne(defs.ColdCoolingWaterOut, data)
+		data = CalcColdRefrigeratedWaterInT(lastMinHourStr, lastMin) //冷冻进水温度
+		MongoUpsertOne(defs.ColdRefrigeratedWaterInT, data)
+		data = CalcColdRefrigeratedWaterOutT(lastMinHourStr, lastMin) //冷冻出水温度
+		MongoUpsertOne(defs.ColdRefrigeratedWaterOut, data)
+
+		//二次泵站
+		data = CalcPumpPowerMin(lastMinHourStr, lastMin) //总功率
+		MongoUpsertOne(defs.PumpPowerMin, data)
+		data = CalcPumpEnergyCostToday(lastMinTime) //今日耗电量
+		MongoUpsertOne(defs.PumpPowerToday, data)
+
+		//太阳能热水
+		if GAerr == nil {
+			data = CalcSolarWaterBoilerPowerConsumptionToday(t) //电加热器今日总耗电量
+			MongoUpsertOne(defs.SolarWaterBoilerPowerConsumptionToday, data)
+			data = CalcSolarWaterHeatCollecterInT(&GAData.Info) //集热器进口温度
+			MongoUpsertOne(defs.SolarWaterHeatCollecterInT, data)
+			data = CalcSolarWaterHeatCollecterOutT(&GAData.Info) //集热器出口温度
+			MongoUpsertOne(defs.SolarWaterHeatCollecterOutT, data)
+			data = CalcSolarWaterJRQT(&GAData.Info) //锅炉温度
+			MongoUpsertOne(defs.SolarWaterJRQT, data)
+			data = CalcSolarWaterHeatCollectionToday(t) //今日总集热量
+			MongoUpsertOne(defs.SolarWaterHeatCollectionToday, data)
+			data = CalcSolarWaterPumpRunningNum(&GAData.Info) //水泵运行数目
+			MongoUpsertOne(defs.SolarWaterPumpRunningNum, data)
+		}
 	}
 
 	if lastMinTime.Minute() == 59 {
@@ -221,6 +242,10 @@ func FailOnError(err error, msg string) {
 	}
 }
 
+// 从t1到t2计算数据，每分钟更新一次
 func UpdateData(t1 time.Time, t2 time.Time) {
-
+	tend := t2.Add(time.Minute)
+	for t := t1.Add(time.Minute); t.Before(tend); t = t.Add(time.Minute) {
+		updateMinute(t, false)
+	}
 }

@@ -104,12 +104,11 @@ func InitMongo() {
 }
 
 func MongoUpdateList(timeStr string, index int, name string, value float64) {
-	var finalData []float64
 	var result defs.CalculationResultFloatList
 	err = MongoResult.FindOne(context.TODO(), bson.D{{"time", timeStr}, {"name", name}}).Decode(&result)
-	if err == nil {
-		finalData = append(finalData, result.Value...)
-	}
+	l := utils.Max(len(result.Value), index+1)
+	finalData := make([]float64, l)
+	copy(finalData, result.Value)
 	finalData[index] = value
 	if err == mongo.ErrNoDocuments {
 		_, err = MongoResult.InsertOne(context.TODO(), bson.D{{"time", timeStr}, {"name", name}, {"value", finalData}})

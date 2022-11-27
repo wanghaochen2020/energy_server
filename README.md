@@ -59,13 +59,13 @@ energy
 
 ```json
 {
-	"time": "2022/05/01 08",
+	"time": "2022/05/01 08:05",
 	"name": "heat",
     "info": {}
 }
 ```
 
-name目前有：heat：各组团热表；GA：太阳能热水
+name目前有：heat：各组团热表；GA：太阳能热水，每分钟一个
 
 ### redis文档
 
