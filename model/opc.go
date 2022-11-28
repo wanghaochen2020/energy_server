@@ -17,6 +17,15 @@ func GetResultFloat(name string, time string) (float64, bool) {
 	return result.Value, true
 }
 
+func GetResultFloatNoTime(name string) (float64, bool) {
+	var result defs.CalculationResultFloat
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}}).Decode(&result)
+	if err != nil {
+		return 0, false
+	}
+	return result.Value, true
+}
+
 func GetResultFloatList(name string, time string) ([]float64, bool) {
 	var result defs.CalculationResultFloatList
 	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}, {"time", time}}).Decode(&result)

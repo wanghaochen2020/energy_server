@@ -114,7 +114,7 @@ func updateHour(t time.Time) {
 	data = CalcSolarWaterHeatEfficiency(t, q1) //集热效率
 	MongoUpdateList(dayStr, hour, defs.SolarWaterHeatEfficiencyDay, data)
 	q2 = CalcSolarWaterBoilerPowerConsumptionHour(hourStr) //电加热器耗电
-	MongoUpdateList(dayStr, hour, defs.SolarWaterBoilerPowerConsumptionHour, q2)
+	MongoUpdateList(dayStr, hour, defs.SolarWaterBoilerPowerConsumptionDay, q2)
 	data = CalcSolarWaterGuaranteeRate(q1, q2) //保证率
 	MongoUpdateList(dayStr, hour, defs.SolarWaterGuaranteeRateDay, data)
 
@@ -191,17 +191,29 @@ func updateMinute(t time.Time, upsert bool) {
 		data = CalcColdCoolingWaterInT(lastMinHourStr, lastMin) //冷却进水温度
 		MongoUpsertOne(defs.ColdCoolingWaterInT, data)
 		data = CalcColdCoolingWaterOutT(lastMinHourStr, lastMin) //冷却出水温度
-		MongoUpsertOne(defs.ColdCoolingWaterOut, data)
+		MongoUpsertOne(defs.ColdCoolingWaterOutT, data)
 		data = CalcColdRefrigeratedWaterInT(lastMinHourStr, lastMin) //冷冻进水温度
 		MongoUpsertOne(defs.ColdRefrigeratedWaterInT, data)
 		data = CalcColdRefrigeratedWaterOutT(lastMinHourStr, lastMin) //冷冻出水温度
-		MongoUpsertOne(defs.ColdRefrigeratedWaterOut, data)
+		MongoUpsertOne(defs.ColdRefrigeratedWaterOutT, data)
 
 		//二次泵站
 		data = CalcPumpPowerMin(lastMinHourStr, lastMin) //总功率
 		MongoUpsertOne(defs.PumpPowerMin, data)
 		data = CalcPumpEnergyCostToday(lastMinTime) //今日耗电量
 		MongoUpsertOne(defs.PumpPowerToday, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 1) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState1, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 2) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState2, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 3) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState3, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 4) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState4, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 5) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState5, data)
+		data = CalcPumpRunningState(lastMinHourStr, lastMin, 6) //泵运行状态
+		MongoUpsertOne(defs.PumpRunningState6, data)
 
 		//太阳能热水
 		if GAerr == nil {
@@ -248,4 +260,5 @@ func UpdateData(t1 time.Time, t2 time.Time) {
 	for t := t1.Add(time.Minute); t.Before(tend); t = t.Add(time.Minute) {
 		updateMinute(t, false)
 	}
+	log.Print("Update Complete")
 }

@@ -54,6 +54,14 @@ func CalcPumpEnergyCostToday(t time.Time) float64 {
 	return ans
 }
 
+func CalcPumpRunningState(hourStr string, min int, id int) float64 {
+	l, ok := GetOpcFloatList(fmt.Sprintf("ZLZ.T_RUN_P%d", id), hourStr)
+	if !ok || len(l) <= min {
+		return 0
+	}
+	return l[min]
+}
+
 // 当日每小时总耗电量
 func CalcPumpEnergyCostHour(hourStr string) float64 {
 	ans := 0.0
