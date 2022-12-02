@@ -72,17 +72,18 @@ func CalcPumpEnergyCostHour(hourStr string) float64 {
 	return ans
 }
 
-// 通过楼控数据计算当小时每分钟各环路输热量，用于计算输热比。目前共有2个环路：环路0(D1、D2组团)；环路1(D3~D6组团)
+// 通过楼控数据计算当小时每分钟各组团耗热量，用于计算输热比和负荷预测
 func CalcPumpHeat(data *defs.LouHeatList) []float64 {
 	heatMap := map[string]int{
 		"D1组团能量表": 0,
-		"D2组团能量表": 0,
-		"D3组团能量表": 1,
-		"D4组团能量表": 1,
-		"D5组团能量表": 1,
-		"D6组团能量表": 1,
+		"D2组团能量表": 1,
+		"D3组团能量表": 2,
+		"D4组团能量表": 3,
+		"D5组团能量表": 4,
+		"D6组团能量表": 5,
+		"南区能量表":   6,
 	}
-	const L = 2
+	const L = 7
 	var heat [L]float64
 	for _, v := range data.Info {
 		if v.Status != "0" {
@@ -105,7 +106,7 @@ func CalcPumpHeat(data *defs.LouHeatList) []float64 {
 	return heat[:]
 }
 
-// 输热比
+// 输热比。目前共有2个环路：环路0(D1、D2组团)；环路1(D3~D6组团)
 func CalcPumpEHR(hourStr string) []float64 {
 	powerStr := [][]string{
 		{"ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_1", "ZLZ.T%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6_BPRS1_2"},
@@ -132,4 +133,14 @@ func CalcPumpEHR(hourStr string) []float64 {
 		}
 	}
 	return power[:]
+}
+
+func CalcHeatConsumptionHour(hourStr string) []float64 {
+	tables := []string{defs.GroupHeatConsumptionDay1, defs.GroupHeatConsumptionDay2, defs.GroupHeatConsumptionDay3,
+		defs.GroupHeatConsumptionDay4, defs.GroupHeatConsumptionDay5, defs.GroupHeatConsumptionDay6, defs.GroupHeatConsumptionDayPubS}
+	ans := make([]float64, len(tables))
+	for i, v := range tables {
+		ans[i] = SumOpcResultList(v, hourStr)
+	}
+	return ans
 }

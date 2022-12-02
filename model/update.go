@@ -108,6 +108,15 @@ func updateHour(t time.Time) {
 	MongoUpdateList(dayStr, hour, defs.PumpEHR1, dataList[0])
 	MongoUpdateList(dayStr, hour, defs.PumpEHR2, dataList[1])
 
+	dataList = CalcHeatConsumptionHour(hourStr) //耗热统计
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay1, dataList[0])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay2, dataList[1])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay3, dataList[2])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay4, dataList[3])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay5, dataList[4])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDay6, dataList[5])
+	MongoUpdateList(dayStr, hour, defs.GroupHeatConsumptionDayPubS, dataList[6])
+
 	//太阳能热水
 	q1 = CalcSolarWaterHeatCollectionHour(hourStr) //集热量
 	MongoUpdateList(dayStr, hour, defs.SolarWaterHeatCollectionDay, q1)
@@ -140,8 +149,15 @@ func updateMinute(t time.Time, upsert bool) {
 	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "heat"}}).Decode(&HeatData)
 	if err == nil {
 		dataList := CalcPumpHeat(&HeatData) //统计输热量
-		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour1, dataList[0])
-		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour2, dataList[1])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour1, dataList[0])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour2, dataList[1])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour3, dataList[2])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour4, dataList[3])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour5, dataList[4])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour6, dataList[5])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHourPubS, dataList[6])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour1, dataList[0]+dataList[1])
+		MongoUpdateList(lastMinHourStr, lastMin, defs.PumpHeatHour2, dataList[2]+dataList[3]+dataList[4]+dataList[5])
 	}
 
 	//太阳能热水

@@ -2,6 +2,22 @@ package defs
 
 //计算结果表名
 const (
+	GroupHeatConsumptionHour1    = "group_heat_consumption_hour_1"     //1组团耗热量当小时每分钟
+	GroupHeatConsumptionHour2    = "group_heat_consumption_hour_2"     //2组团耗热量当小时每分钟
+	GroupHeatConsumptionHour3    = "group_heat_consumption_hour_3"     //3组团耗热量当小时每分钟
+	GroupHeatConsumptionHour4    = "group_heat_consumption_hour_4"     //4组团耗热量当小时每分钟
+	GroupHeatConsumptionHour5    = "group_heat_consumption_hour_5"     //5组团耗热量当小时每分钟
+	GroupHeatConsumptionHour6    = "group_heat_consumption_hour_6"     //6组团耗热量当小时每分钟
+	GroupHeatConsumptionHourPubS = "group_heat_consumption_hour_pub_s" //公共组团南区耗热量当小时每分钟
+
+	GroupHeatConsumptionDay1    = "group_heat_consumption_day_1"     //1组团耗热量每日各小时
+	GroupHeatConsumptionDay2    = "group_heat_consumption_day_2"     //2组团耗热量每日各小时
+	GroupHeatConsumptionDay3    = "group_heat_consumption_day_3"     //3组团耗热量每日各小时
+	GroupHeatConsumptionDay4    = "group_heat_consumption_day_4"     //4组团耗热量每日各小时
+	GroupHeatConsumptionDay5    = "group_heat_consumption_day_5"     //5组团耗热量每日各小时
+	GroupHeatConsumptionDay6    = "group_heat_consumption_day_6"     //6组团耗热量每日各小时
+	GroupHeatConsumptionDayPubS = "group_heat_consumption_day_pub_s" //公共组团南区耗热量每日各小时
+
 	EnergyOnlineRate             = "energy_online_rate"              //能源站设备在线率
 	EnergyBoilerPower            = "energy_boiler_power"             //能源站锅炉功率
 	EnergyPowerConsumptionToday  = "energy_power_consumption_today"  //能源站今日总耗能
@@ -42,8 +58,8 @@ const (
 	PumpRunningState4 = "pump_running_state4"  //二次泵站泵运行状态
 	PumpRunningState5 = "pump_running_state5"  //二次泵站泵运行状态
 	PumpRunningState6 = "pump_running_state6"  //二次泵站泵运行状态
-	PumpHeatHour1     = "pump_heat_hour1"      //二次泵站当小三每分钟环路1输热量
-	PumpHeatHour2     = "pump_heat_hour2"      //二次泵站当小三每分钟环路2输热量
+	PumpHeatHour1     = "pump_heat_hour1"      //二次泵站当小时每分钟环路1输热量
+	PumpHeatHour2     = "pump_heat_hour2"      //二次泵站当小时每分钟环路2输热量
 	PumpEHR1          = "pump_EHR1"            //二次泵站环路1每日EHR
 	PumpEHR2          = "pump_EHR2"            //二次泵站环路2每日EHR
 
