@@ -1,10 +1,15 @@
 package model
 
 import (
+	"context"
 	"energy/defs"
 	"energy/utils"
 	"fmt"
+	"log"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // 当分钟制冷机功率，machineId目前有Z_L,Z_LX1,Z_LX2，分别是螺杆机、离心机1、离心机2
@@ -221,4 +226,55 @@ func ColdPayloadWeek(hourStr string) float64 {
 
 func ColdPayloadMonth(hourStr string) float64 {
 	return 0.0
+}
+
+//报警
+func UpdateColdAlarm(hourStr string, min int, t time.Time) {
+	alarmOpcList := map[string]defs.Alarm{
+		"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E6%95%85%E9%9A%9C":                   {"螺杆机", "故障"},
+		"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E5%81%9C%E6%9C%BA%E6%95%85%E9%9A%9C": {"螺杆机", "停机故障"},
+	}
+
+	var oldList defs.MongoAlarmList
+	MongoResult.FindOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}).Decode(&oldList)
+	alarmMap := make(map[string]int)
+	for _, v := range oldList.Info {
+		if v.State == 0 {
+			alarmMap[v.Name] = 1
+		}
+	}
+
+	minStr := fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
+	var newList []defs.OpcAlarm
+
+	for k, v := range alarmOpcList {
+		l, ok := GetOpcFloatList(k, hourStr)
+		if !ok || len(l) <= min {
+			continue
+		}
+		if !utils.Zero(l[min]) { //新报警
+			var newAlarm defs.OpcAlarm
+			newAlarm.Name = v.Name
+			newAlarm.State = 0
+			newAlarm.Time = minStr
+			newAlarm.Type = v.Type
+			newList = append(newList, newAlarm)
+		} else if alarmMap[k] == 1 { //已处理的旧报警
+			alarmMap[k] = 2
+		}
+	}
+
+	for _, v := range oldList.Info {
+		if alarmMap[v.Name] == 2 {
+			v.State = 1
+		}
+	}
+
+	oldList.Info = append(oldList.Info, newList...)
+
+	opts := options.Update().SetUpsert(true)
+	_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}, bson.D{{"$set", bson.D{{"info", oldList.Info}}}}, opts)
+	if err != nil {
+		log.Print(err)
+	}
 }
