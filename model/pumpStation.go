@@ -150,17 +150,17 @@ func CalcHeatConsumptionHour(hourStr string) []float64 {
 	return ans
 }
 
+var pumpAlarmOpcList = map[string]defs.Alarm{
+	"ZLZ.T_ALARM_P1": {"1#空调冷水二次泵", "报警"},
+	"ZLZ.T_ALARM_P2": {"2#空调冷水二次泵", "报警"},
+	"ZLZ.T_ALARM_P3": {"3#空调冷水二次泵", "报警"},
+	"ZLZ.T_ALARM_P4": {"4#空调冷水二次泵", "报警"},
+	"ZLZ.T_ALARM_P5": {"5#空调冷水二次泵", "报警"},
+	"ZLZ.T_ALARM_P6": {"6#空调冷水二次泵", "报警"},
+}
+
 //报警
 func UpdatePumpAlarm(hourStr string, min int, t time.Time) {
-	alarmOpcList := map[string]defs.Alarm{
-		"ZLZ.T_ALARM_P1": {"1#空调冷水二次泵", "报警"},
-		"ZLZ.T_ALARM_P2": {"2#空调冷水二次泵", "报警"},
-		"ZLZ.T_ALARM_P3": {"3#空调冷水二次泵", "报警"},
-		"ZLZ.T_ALARM_P4": {"4#空调冷水二次泵", "报警"},
-		"ZLZ.T_ALARM_P5": {"5#空调冷水二次泵", "报警"},
-		"ZLZ.T_ALARM_P6": {"6#空调冷水二次泵", "报警"},
-	}
-
 	var oldList defs.MongoAlarmList
 	MongoResult.FindOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}).Decode(&oldList)
 	alarmMap := make(map[string]int)
@@ -170,10 +170,17 @@ func UpdatePumpAlarm(hourStr string, min int, t time.Time) {
 		}
 	}
 
+	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
+
+	alarmNum := 0.0
+	if t.Hour() != 0 || t.Minute() != 0 {
+		alarmNum, _ = GetResultFloat(defs.PumpAlarmNumToday, dayStr)
+	}
+
 	minStr := fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
 	var newList []defs.OpcAlarm
 
-	for k, v := range alarmOpcList {
+	for k, v := range pumpAlarmOpcList {
 		l, ok := GetOpcFloatList(k, hourStr)
 		if !ok || len(l) <= min {
 			continue
@@ -203,4 +210,6 @@ func UpdatePumpAlarm(hourStr string, min int, t time.Time) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	MongoUpsertOne(defs.PumpAlarmNumToday, alarmNum)
 }

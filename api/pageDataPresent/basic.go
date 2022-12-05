@@ -19,3 +19,10 @@ func BasicDataList(c *gin.Context) {
 	d, _ := model.GetResultFloatList(name, time)
 	c.JSON(http.StatusOK, d)
 }
+
+func OpcData(c *gin.Context) {
+	name := c.Query("name")
+	time := c.Query("time")
+	d, _ := model.GetOpcFloatList(name, time)
+	c.JSON(http.StatusOK, d)
+}

@@ -228,13 +228,13 @@ func ColdPayloadMonth(hourStr string) float64 {
 	return 0.0
 }
 
+var coldAlarmOpcList = map[string]defs.Alarm{
+	"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E6%95%85%E9%9A%9C":                   {"螺杆机", "故障"},
+	"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E5%81%9C%E6%9C%BA%E6%95%85%E9%9A%9C": {"螺杆机", "停机故障"},
+}
+
 //报警
 func UpdateColdAlarm(hourStr string, min int, t time.Time) {
-	alarmOpcList := map[string]defs.Alarm{
-		"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E6%95%85%E9%9A%9C":                   {"螺杆机", "故障"},
-		"ZLZ.Z_L_%E5%BD%93%E5%89%8D%E5%81%9C%E6%9C%BA%E6%95%85%E9%9A%9C": {"螺杆机", "停机故障"},
-	}
-
 	var oldList defs.MongoAlarmList
 	MongoResult.FindOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}).Decode(&oldList)
 	alarmMap := make(map[string]int)
@@ -244,10 +244,17 @@ func UpdateColdAlarm(hourStr string, min int, t time.Time) {
 		}
 	}
 
+	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
+
+	alarmNum := 0.0
+	if t.Hour() != 0 || t.Minute() != 0 {
+		alarmNum, _ = GetResultFloat(defs.ColdAlarmNumToday, dayStr)
+	}
+
 	minStr := fmt.Sprintf("%02d:%02d", t.Hour(), t.Minute())
 	var newList []defs.OpcAlarm
 
-	for k, v := range alarmOpcList {
+	for k, v := range coldAlarmOpcList {
 		l, ok := GetOpcFloatList(k, hourStr)
 		if !ok || len(l) <= min {
 			continue
@@ -277,4 +284,6 @@ func UpdateColdAlarm(hourStr string, min int, t time.Time) {
 	if err != nil {
 		log.Print(err)
 	}
+
+	MongoUpsertOne(defs.ColdAlarmNumToday, alarmNum)
 }

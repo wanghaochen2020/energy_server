@@ -35,7 +35,8 @@ const (
 	EnergyBoilerPayloadDay       = "energy_boiler_payload_day"       //能源站每日各小时锅炉负载
 	EnergyBoilerPayloadMonth     = "energy_boiler_payload_month"     //能源站每月各天平均锅炉负载
 	EnergyBoilerPayloadYear      = "energy_boiler_payload_year"      //能源站每年各月平均锅炉负载
-	EnergyAlarmToday             = "energy_alarm_today"              //能源站今日告警
+	EnergyAlarmToday             = "energy_alarm_today"              //能源站当日告警
+	EnergyAlarmNumToday          = "energy_alarm_num_today"          //能源站今日告警次数
 
 	ColdPowerMin              = "cold_power_min"               //制冷中心当分钟功率
 	ColdEnergyCostToday       = "cold_energy_cost_today"       //制冷中心今日能耗
@@ -49,7 +50,8 @@ const (
 	ColdCarbonDay             = "cold_carbon_day"              //制冷中心每日各小时碳排
 	ColdCarbonMonth           = "cold_carbon_month"            //制冷中心每月各天碳排总和
 	ColdCarbonYear            = "cold_carbon_year"             //制冷中心每年各月碳排总和
-	ColdAlarmToday            = "energy_alarm_today"           //制冷中心今日告警
+	ColdAlarmToday            = "cold_alarm_today"             //制冷中心今日告警
+	ColdAlarmNumToday         = "cold_alarm_num_today"         //制冷中心今日告警次数
 
 	PumpPowerMin      = "pump_power_min"       //二次泵站功率
 	PumpPowerToday    = "pump_power_today"     //二次泵站今日能耗
@@ -64,7 +66,8 @@ const (
 	PumpHeatHour2     = "pump_heat_hour2"      //二次泵站当小时每分钟环路2输热量
 	PumpEHR1          = "pump_EHR1"            //二次泵站环路1每日EHR
 	PumpEHR2          = "pump_EHR2"            //二次泵站环路2每日EHR
-	PumpAlarmToday    = "energy_alarm_today"   //二次泵站今日告警
+	PumpAlarmToday    = "pump_alarm_today"     //二次泵站今日告警
+	PumpAlarmNumToday = "pump_alarm_num_today" //二次泵站今日告警次数
 
 	SolarWaterBoilerPowerConsumptionToday = "solar_water_boiler_power_comsumption_today" //太阳能热水电加热器今日总耗电量
 	SolarWaterHeatCollecterInT            = "solar_water_heat_collecter_in_temp"         //太阳能热水集热器进口温度
@@ -80,7 +83,6 @@ const (
 	SolarWaterBoilerPowerConsumptionDay   = "solar_water_boiler_power_comsumption_day"   //太阳能热水电加热器耗电量当日每小时
 	SolarWaterHeatEfficiencyDay           = "solar_water_heat_efficiency_day"            //太阳能热水集热效率当日每小时
 	SolarWaterGuaranteeRateDay            = "solar_water_guarantee_rate"                 //太阳能热水保证率当日每小时
-	SolarWaterAlarmToday                  = "energy_alarm_today"                         //太阳能热水今日告警
 )
 
 //其它常数
