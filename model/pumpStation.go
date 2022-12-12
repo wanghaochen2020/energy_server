@@ -77,6 +77,14 @@ func CalcPumpEnergyCostHour(hourStr string) float64 {
 	return ans
 }
 
+func CalcPumpCarbonDay(dayStr string) float64 {
+	return SumOpcResultList(defs.PumpEnergyCostDay, dayStr) * 0.604 / 1000 //单位tCO2
+}
+
+func CalcPumpCarbonMonth(monthStr string) float64 {
+	return SumOpcResultList(defs.PumpCarbonMonth, monthStr) //单位tCO2
+}
+
 // 通过楼控数据计算当小时每分钟各组团耗热量，用于计算输热比和负荷预测
 func CalcPumpHeat(data *defs.LouHeatList) []float64 {
 	heatMap := map[string]int{

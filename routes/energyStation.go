@@ -9,5 +9,6 @@ import (
 func EnergyStationRouter(router *gin.RouterGroup) {
 	router.GET("basicdata", pageDataPresent.BasicData)
 	router.GET("basicdatalist", pageDataPresent.BasicDataList)
-	router.GET("opcdata", pageDataPresent.OpcData)
+	router.GET("opcdata", pageDataPresent.OpcDataList)
+	router.POST("basicdataset", pageDataPresent.BasicDataSet)
 }

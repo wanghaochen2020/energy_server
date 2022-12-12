@@ -231,9 +231,25 @@ func CalcSolarWaterHeatEfficiency(t time.Time, heatCol float64) float64 {
 	return heatCol / I
 }
 
+func CalcSolarWaterHeatEfficiencyDay(dayStr string) float64 {
+	return AvgOpcResultList(defs.SolarWaterHeatEfficiencyDay, dayStr)
+}
+
+func CalcSolarWaterHeatEfficiencyMonth(monthStr string) float64 {
+	return AvgOpcResultList(defs.SolarWaterHeatEfficiencyMonth, monthStr)
+}
+
 func CalcSolarWaterGuaranteeRate(q1 float64, q2 float64) float64 {
 	if q1 == 0 && q2 == 0 {
 		return 0
 	}
 	return q1 / (q1 + q2)
+}
+
+func CalcSolarWaterGuaranteeRateDay(dayStr string) float64 {
+	return AvgOpcResultList(defs.SolarWaterGuaranteeRateDay, dayStr)
+}
+
+func CalcSolarWaterGuaranteeRateMonth(monthStr string) float64 {
+	return AvgOpcResultList(defs.SolarWaterGuaranteeRateMonth, monthStr)
 }

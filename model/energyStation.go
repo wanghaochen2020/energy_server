@@ -39,7 +39,7 @@ func CalcEnergyBoilerPower(hourStr string, min int) float64 {
 }
 
 // 能源站今日总耗能，每分钟
-func CalcEnergyPowerConsumptionToday(t time.Time) float64 {
+func CalcEnergyPowerConsumptionToday(t time.Time, q23 float64) float64 {
 	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
 	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
 	ans := 0.0
@@ -50,8 +50,8 @@ func CalcEnergyPowerConsumptionToday(t time.Time) float64 {
 			ans += cost[i]
 		}
 	}
-	ans += CalcEnergyCarbonHour(hourStr) //如果卡就删掉这一行，然后把这个函数做成一个小时调用一次
-	ans *= 1000 / 0.604                  //由tCO2换算到kW·h
+	ans += CalcEnergyCarbonHour(hourStr, q23) //如果卡就删掉这一行，然后把这个函数做成一个小时调用一次
+	ans *= 1000 / 0.604                       //由tCO2换算到kW·h
 	return ans
 }
 
@@ -172,9 +172,9 @@ func CalcEnergyHeatStorageAndRelease(hourStr string) float64 {
 	return (rightTemp - leftTemp) * 5.6 * 100 * 1e3 * 4.2 * 1e3 //单位J
 }
 
-// 能源站锅炉能耗
-func CalcEnergyBoilerEnergyCost(hourStr string) float64 {
-	q2 := 0.0
+// 能源站各锅炉能耗
+func CalcEnergyBoilerEnergyCost(hourStr string) []float64 {
+	q2 := make([]float64, 4)
 	for i := 1; i <= 4; i++ {
 		w, ok := GetOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
 		if !ok {
@@ -182,7 +182,26 @@ func CalcEnergyBoilerEnergyCost(hourStr string) float64 {
 		}
 		minLen := len(w)
 		for j := 0; j < minLen; j++ {
-			q2 += w[j]
+			q2[i-1] += w[j] / 60
+		}
+	}
+	return q2
+}
+
+var qlist = []string{
+	defs.EnergyBoilerPowerConsumptionDay1,
+	defs.EnergyBoilerPowerConsumptionDay2,
+	defs.EnergyBoilerPowerConsumptionDay3,
+	defs.EnergyBoilerPowerConsumptionDay4,
+}
+
+// 能源站各锅炉今日能耗
+func CalcEnergyBoilerEnergyCostToday(dayStr string, q []float64) []float64 {
+	q2 := make([]float64, 4)
+	for i, v := range qlist {
+		q2[i] = SumOpcResultList(v, dayStr)
+		if len(q) > i {
+			q2[i] += q[i]
 		}
 	}
 	return q2
@@ -312,7 +331,7 @@ func CalcEnergyEfficiency(hourStr string) float64 {
 }
 
 // 计算这个小时的碳排
-func CalcEnergyCarbonHour(hourStr string) float64 {
+func CalcEnergyCarbonHour(hourStr string, q23 float64) float64 {
 	APGL2, ok := GetOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6APGL2", hourStr) //有功电度APGL2
 	if !ok {
 		return 0
@@ -320,17 +339,6 @@ func CalcEnergyCarbonHour(hourStr string) float64 {
 	AZ1, ok := GetOpcFloatList("ZLZ.%E6%9C%89%E5%8A%9F%E7%94%B5%E5%BA%A6AZ_1", hourStr) //有功电度AZ_1
 	if !ok {
 		return 0
-	}
-
-	q23 := 0.0
-	for i := 1; i <= 4; i++ {
-		w, ok := GetOpcFloatList("ZLZ.%E5%8A%9F%E7%8E%87%E9%87%87%E9%9B%86"+fmt.Sprint(i), hourStr) //功率采集
-		if !ok {
-			continue
-		}
-		for j := 0; j < len(w); j++ {
-			q23 += w[j]
-		}
 	}
 	l1 := -1
 	for i := 0; i < len(APGL2); i++ {
@@ -372,7 +380,7 @@ func CalcEnergyCarbonHour(hourStr string) float64 {
 	if l2 != -1 {
 		q22 = AZ1[r2] - AZ1[l2]
 	}
-	t := (q21 + q22 + q23/60) / 1000 * 0.604 //吨CO2
+	t := (q21 + q22 + q23) / 1000 * 0.604 //吨CO2
 	return t
 }
 
