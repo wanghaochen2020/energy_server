@@ -3,13 +3,118 @@ package model
 import (
 	"context"
 	"energy/defs"
-	"fmt"
-	"strconv"
-	"time"
+	"energy/utils"
 
 	"go.mongodb.org/mongo-driver/bson"
 )
 
+func GetResultFloat(name string, time string) (float64, bool) {
+	var result defs.CalculationResultFloat
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}, {"time", time}}).Decode(&result)
+	if err != nil {
+		return 0, false
+	}
+	return result.Value, true
+}
+
+func GetResultFloatNoTime(name string) (float64, bool) {
+	var result defs.CalculationResultFloat
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}}).Decode(&result)
+	if err != nil {
+		return 0, false
+	}
+	return result.Value, true
+}
+
+func GetResultFloatList(name string, time string) ([]float64, bool) {
+	var result defs.CalculationResultFloatList
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}, {"time", time}}).Decode(&result)
+	if err != nil {
+		return nil, false
+	}
+	return result.Value, true
+}
+
+func GetOpcBoolList(itemid string, time string) ([]bool, bool) {
+	var opcData defs.OpcData
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	if err != nil {
+		return nil, false
+	}
+	ans := []bool{}
+	for _, v := range opcData.Value {
+		val, _ := v.(bool) //失败的值视为0
+		ans = append(ans, val)
+	}
+	return ans, true
+
+}
+
+func GetOpcFloatList(itemid string, time string) ([]float64, bool) {
+	var opcData defs.OpcData
+	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
+	if err != nil {
+		return nil, false
+	}
+	ans := []float64{}
+	for _, v := range opcData.Value {
+		val, _ := utils.GetFloat(v) //失败的值视为0
+		ans = append(ans, val)
+	}
+	return ans, true
+
+}
+
+func SumOpcResultList(tablename string, time string) float64 {
+	l, ok := GetResultFloatList(tablename, time)
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	for _, v := range l {
+		sum += v
+	}
+	return sum
+}
+
+func AvgOpcResultList(tablename string, time string) float64 {
+	l, ok := GetResultFloatList(tablename, time)
+	if !ok {
+		return 0
+	}
+	sum := 0.0
+	i := 0
+	for _, v := range l {
+		sum += v
+		i++
+	}
+	if i == 0 {
+		return 0
+	}
+	return sum / float64(i)
+}
+
+func RightSubLeft(l []float64) float64 {
+	left := 0
+	right := 0
+	for i := 0; i < len(l); i++ {
+		if utils.Zero(l[i]) {
+			continue
+		}
+		left = i
+		break
+	}
+	for i := len(l) - 1; i >= 0; i-- {
+		if utils.Zero(l[i]) {
+			continue
+		}
+		right = i
+		break
+	}
+	return l[right] - l[left]
+}
+
+/*
 func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 0-day, 1-hour，2-近7天, 3-过去一年每月
 	var finalData [100]interface{}
 	lenFin := 0
@@ -118,4 +223,4 @@ func GetOpcDataList(tableName string, timeType int) []interface{} { //timeType: 
 	}
 
 	return finalData[:lenFin]
-}
+}*/

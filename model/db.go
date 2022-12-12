@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"energy/defs"
 	"energy/utils"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"gorm.io/driver/mysql"
@@ -24,8 +26,8 @@ var (
 	RedisClient  *redis.Client
 	MongoClient  *mongo.Client
 	MongoOPC     *mongo.Collection
-	MongoOPCTime *mongo.Collection
 	MongoResult  *mongo.Collection
+	MongoLoukong *mongo.Collection
 )
 var Db *mongo.Database
 
@@ -97,6 +99,34 @@ func InitMongo() {
 	}
 
 	MongoOPC = MongoClient.Database("energy").Collection("opc_data")
-	MongoOPCTime = MongoClient.Database("energy").Collection("opc_update_time")
 	MongoResult = MongoClient.Database("energy").Collection("calculation_result")
+	MongoLoukong = MongoClient.Database("energy").Collection("loukong")
+}
+
+func MongoUpdateList(timeStr string, index int, name string, value float64) {
+	var result defs.CalculationResultFloatList
+	err = MongoResult.FindOne(context.TODO(), bson.D{{"time", timeStr}, {"name", name}}).Decode(&result)
+	l := utils.Max(len(result.Value), index+1)
+	finalData := make([]float64, l)
+	copy(finalData, result.Value)
+	finalData[index] = value
+	if err == mongo.ErrNoDocuments {
+		_, err = MongoResult.InsertOne(context.TODO(), bson.D{{"time", timeStr}, {"name", name}, {"value", finalData}})
+		if err != nil {
+			log.Print(err)
+		}
+	} else {
+		_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"time", timeStr}, {"name", name}}, bson.D{{"$set", bson.D{{"value", finalData}}}})
+		if err != nil {
+			log.Print(err)
+		}
+	}
+}
+
+func MongoUpsertOne(name string, value float64) {
+	opts := options.Update().SetUpsert(true)
+	_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"name", name}}, bson.D{{"$set", bson.D{{"value", value}}}}, opts)
+	if err != nil {
+		log.Print(err)
+	}
 }
