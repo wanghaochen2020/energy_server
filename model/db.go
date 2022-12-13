@@ -123,7 +123,7 @@ func MongoUpdateList(timeStr string, index int, name string, value float64) {
 	}
 }
 
-func MongoUpsertOne(name string, value float64) {
+func MongoUpsertOne(name string, value interface{}) {
 	opts := options.Update().SetUpsert(true)
 	_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"name", name}}, bson.D{{"$set", bson.D{{"value", value}}}}, opts)
 	if err != nil {

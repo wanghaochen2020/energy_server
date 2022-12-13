@@ -109,6 +109,10 @@ func updateHour(t time.Time) {
 	MongoUpdateList(dayStr, hour, defs.EnergyCarbonDay, data)
 	data = CalcEnergyPayloadHour(q1) //能源站锅炉负载率
 	MongoUpdateList(dayStr, hour, defs.EnergyBoilerPayloadDay, data)
+	dataList := CalcEnergyRunningTimeHour(hourStr) //设备运行时间（分钟）
+	for i := 0; i < 9; i++ {
+		MongoUpdateList(dayStr, hour, defs.EnergyRunningTimeDay[i], dataList[i])
+	}
 
 	//制冷中心
 	q1 = CalcColdEnergyCost(hourStr, defs.ColdMachine1)
@@ -125,7 +129,7 @@ func updateHour(t time.Time) {
 	//二次泵站
 	data = CalcPumpEnergyCostHour(hourStr) //耗能
 	MongoUpdateList(dayStr, hour, defs.PumpEnergyCostDay, data)
-	dataList := CalcPumpEHR(hourStr) //输热比
+	dataList = CalcPumpEHR(hourStr) //输热比
 	MongoUpdateList(dayStr, hour, defs.PumpEHR1, dataList[0])
 	MongoUpdateList(dayStr, hour, defs.PumpEHR2, dataList[1])
 
@@ -217,9 +221,8 @@ func updateMinute(t time.Time, upsert bool) {
 		MongoUpsertOne(defs.EnergyBoilerRunningNum, data)
 		data = CalcEnergyTankRunningNum(lastMinHourStr, lastMin) //蓄热水箱运行台数
 		MongoUpsertOne(defs.EnergyTankRunningNum, data)
-
-		//设备温度(无)
-		//设备供热量（无）
+		dataList = CalcEnergyRunningTimeToday(lastMinTime) //设备今日运行时长
+		MongoUpsertOne(defs.EnergyRunningTimeToday, dataList)
 
 		data = CalcEnergyHeatSupplyToday(t) //总供热量
 		MongoUpsertOne(defs.EnergyHeatSupplyToday, data)

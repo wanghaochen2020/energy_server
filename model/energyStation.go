@@ -68,6 +68,47 @@ func CalcEnergyBoilerRunningNum(hourStr string, min int) float64 {
 	return ans
 }
 
+//设备该小时运行时间(分钟)
+func CalcEnergyRunningTimeHour(hourStr string) []float64 {
+	ans := make([]float64, 9)
+	for i := 1; i <= 4; i++ {
+		w, _ := GetOpcFloatList("ZLZ.%E7%B3%BB%E7%BB%9F%E8%BF%90%E8%A1%8C%E4%B8%AD"+fmt.Sprint(i), hourStr) //运行状态
+		l := len(w)
+		for j := 0; j < l; j++ {
+			ans[i-1] += w[j]
+		}
+	}
+	for i := 1; i <= 3; i++ {
+		w, _ := GetOpcFloatList("ZLZ.RUN_P"+fmt.Sprint(i+3), hourStr) //运行状态
+		l := len(w)
+		for j := 0; j < l; j++ {
+			ans[i+3] += w[j]
+		}
+	}
+
+	w1, _ := GetOpcFloatList("ZLZ.OPEN_V6", hourStr)  //运行状态
+	w2, _ := GetOpcFloatList("ZLZ.CLOSE_V1", hourStr) //运行状态
+	l := utils.Min(len(w1), len(w2))
+	for j := 0; j < l; j++ {
+		if w1[j] != 0 && w2[j] != 0 {
+			ans[7]++
+		}
+	}
+	ans[8] = ans[7]
+	return ans
+}
+
+//设备今日运行时间（小时）
+func CalcEnergyRunningTimeToday(t time.Time) []float64 {
+	dayStr := fmt.Sprintf("%04d/%02d/%02d", t.Year(), t.Month(), t.Day())
+	hourStr := fmt.Sprintf("%s %02d", dayStr, t.Hour())
+	ans := CalcEnergyRunningTimeHour(hourStr)
+	for i := 0; i < 9; i++ {
+		ans[i] += SumOpcResultList(defs.EnergyRunningTimeDay[i], dayStr) / 60
+	}
+	return ans
+}
+
 // 能源站蓄热水箱运行台数
 func CalcEnergyTankRunningNum(hourStr string, min int) float64 {
 	items := []string{"ZLZ.OPEN_V6", "ZLZ.OPEN_V7"}
