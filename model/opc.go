@@ -35,6 +35,15 @@ func GetResultFloatList(name string, time string) ([]float64, bool) {
 	return result.Value, true
 }
 
+func GetResultInterfaceList(name string, time string) ([]map[string]interface{}, bool) {
+	var result defs.CalculationResultInterfaceList
+	err := MongoResult.FindOne(context.TODO(), bson.D{{"name", name}, {"time", time}}).Decode(&result)
+	if err != nil {
+		return nil, false
+	}
+	return result.Value, true
+}
+
 func GetOpcBoolList(itemid string, time string) ([]bool, bool) {
 	var opcData defs.OpcData
 	err := MongoOPC.FindOne(context.TODO(), bson.D{{"itemid", itemid}, {"time", time}}).Decode(&opcData)
