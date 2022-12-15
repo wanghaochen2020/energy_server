@@ -5,6 +5,7 @@ type BasicDataSet struct {
 	BasicDataListDay  []string `json:"basic_data_list_day"`
 	BasicDataListHour []string `json:"basic_data_list_hour"`
 	BasicOpcList      []string `json:"basic_opc_list"`
+	MapDataListDay    []string `json:"map_data_list_day"`
 }
 
 type BasicDataSetRequest struct {

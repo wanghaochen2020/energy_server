@@ -131,6 +131,12 @@ type CalculationResultFloatList struct {
 	Value []float64 `bson:"value"`
 }
 
+type CalculationResultInterfaceList struct {
+	Time  string                   `bson:"time"`
+	Name  string                   `bson:"name"`
+	Value []map[string]interface{} `bson:"value"`
+}
+
 type CalculationResultFloat struct {
 	Time  string  `bson:"time"`
 	Name  string  `bson:"name"`
@@ -149,9 +155,9 @@ type OpcAlarm struct {
 }
 
 type MongoAlarmList struct {
-	Time string     `bson:"time"`
-	Name string     `bson:"name"`
-	Info []OpcAlarm `bson:"info"`
+	Time  string     `bson:"time"`
+	Name  string     `bson:"name"`
+	Value []OpcAlarm `bson:"value"`
 }
 
 type Alarm struct {

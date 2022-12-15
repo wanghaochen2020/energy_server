@@ -238,7 +238,7 @@ func UpdateColdAlarm(hourStr string, min int, t time.Time) {
 	var oldList defs.MongoAlarmList
 	MongoResult.FindOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}).Decode(&oldList)
 	alarmMap := make(map[string]int)
-	for _, v := range oldList.Info {
+	for _, v := range oldList.Value {
 		if v.State == 0 {
 			alarmMap[v.Name] = 1
 		}
@@ -271,16 +271,16 @@ func UpdateColdAlarm(hourStr string, min int, t time.Time) {
 		}
 	}
 
-	for _, v := range oldList.Info {
+	for _, v := range oldList.Value {
 		if alarmMap[v.Name] == 2 {
 			v.State = 1
 		}
 	}
 
-	oldList.Info = append(oldList.Info, newList...)
+	oldList.Value = append(oldList.Value, newList...)
 
 	opts := options.Update().SetUpsert(true)
-	_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}, bson.D{{"$set", bson.D{{"info", oldList.Info}}}}, opts)
+	_, err = MongoResult.UpdateOne(context.TODO(), bson.D{{"name", defs.ColdAlarmToday}, {"time", hourStr}}, bson.D{{"$set", bson.D{{"value", oldList.Value}}}}, opts)
 	if err != nil {
 		log.Print(err)
 	}

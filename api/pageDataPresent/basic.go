@@ -55,6 +55,10 @@ func BasicDataSet(c *gin.Context) {
 		d, _ := model.GetResultFloatList(v, ubody.DayStr)
 		ans[v] = d
 	}
+	for _, v := range ubody.Data.MapDataListDay {
+		d, _ := model.GetResultInterfaceList(v, ubody.DayStr)
+		ans[v] = d
+	}
 	for _, v := range ubody.Data.BasicDataListHour {
 		d, _ := model.GetResultFloatList(v, ubody.HourStr)
 		ans[v] = d

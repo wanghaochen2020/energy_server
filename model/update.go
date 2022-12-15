@@ -169,7 +169,7 @@ func updateMinute(t time.Time, upsert bool) {
 	//报警数据
 	UpdateEnergyAlarm(lastMinHourStr, lastMin, lastMinTime) //能源站
 	UpdateColdAlarm(lastMinHourStr, lastMin, lastMinTime)   //制冷中心
-	UpdateEnergyAlarm(lastMinHourStr, lastMin, lastMinTime) //二次泵站
+	UpdatePumpAlarm(lastMinHourStr, lastMin, lastMinTime)   //二次泵站
 	//之后计算要用的数据
 
 	exampleTime := "2022/05/01 08:05"
