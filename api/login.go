@@ -4,8 +4,9 @@ import (
 	"energy/middleware"
 	"energy/model"
 	"energy/utils/errmsg"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // 登录,返回一个token
