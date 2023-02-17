@@ -1,43 +1,55 @@
 package loadPredict
 
 import (
-	"energy/defs"
 	"energy/model"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"time"
 )
 
-/*
 func GetLoadStatistic(c *gin.Context) {
 	index := c.Query("index")
+	a := model.GetLoad(index, "today")
+	b := model.GetData("temperature", int(time.Now().Unix()))
 
 	c.JSON(http.StatusOK, gin.H{
-		"code": a,
+		"负荷量": a,
+		"温度":  b,
 	})
 }
 
 func GetComparison(c *gin.Context) {
 	index := c.Query("index")
+	a := model.GetLoad(index, "today")
+	b := model.LoadPredict(index)
 
 	c.JSON(http.StatusOK, gin.H{
-		"code": a,
+		"真实值": a,
+		"预测值": b,
 	})
 }
 
-
-*/
 func GetRealLoad(c *gin.Context) {
 	index := c.Query("index")
-	var a []float64
+	a := model.GetLoad(index, "today")
 
-	switch index {
-	case "1":
-		a, _ = model.GetResultFloatList(defs.GroupHeatConsumptionHour1, "2022/10/13 13")
-	}
+	c.JSON(http.StatusOK, gin.H{
+		"真实值": a,
+	})
+}
 
-	fmt.Println(a)
-	//fmt.Println(b)
+func GetLoadPredict(c *gin.Context) {
+	index := c.Query("index")
+	a := model.LoadPredict(index)
+
+	c.JSON(http.StatusOK, gin.H{
+		"预测值": a,
+	})
+}
+
+func GetTemp(c *gin.Context) {
+	a := model.GetData("temperature", int(time.Now().Unix()))
+
 	c.JSON(http.StatusOK, gin.H{
 		"code": a,
 	})

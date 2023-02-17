@@ -156,6 +156,7 @@ func GetDeviceWorkState(c *gin.Context) {
 	var array = [...]string{"ZLZ.%E7%B3%BB%E7%BB%9F%E8%BF%90%E8%A1%8C%E4%B8%AD1", "ZLZ.%E7%B3%BB%E7%BB%9F%E8%BF%90%E8%A1%8C%E4%B8%AD2", "ZLZ.%E7%B3%BB%E7%BB%9F%E8%BF%90%E8%A1%8C%E4%B8%AD3", "ZLZ.%E7%B3%BB%E7%BB%9F%E8%BF%90%E8%A1%8C%E4%B8%AD4", "ZLZ.RUN_P1", "ZLZ.RUN_P2", "ZLZ.RUN_P3", "ZLZ.RUN_P7", "ZLZ.RUN_P8", "ZLZ.RUN_P9", "ZLZ.OPEN_V1", "ZLZ.OPEN_V2", "ZLZ.OPEN_V3", "ZLZ.OPEN_V4", "ZLZ.OPEN_V5", "ZLZ.OPEN_V6", "ZLZ.OPEN_V8", "ZLZ.OPEN_V11", "ZLZ.OUTPUT_T29", "ZLZ.OUTPUT_T30"}
 	var array2 [20]int
 	var result [22]int
+	var stringResult [22]string
 
 	for i := 0; i < len(array); i++ {
 		a, _ := model.GetOpcFloatList(array[i], "2022/10/12 13")
@@ -177,7 +178,22 @@ func GetDeviceWorkState(c *gin.Context) {
 		result[i] = array2[i-2]
 	}
 
+	for i := 0; i < 12; i++ {
+		if result[i] == 0 {
+			stringResult[i] = "不工作"
+		} else if result[i] == 1 {
+			stringResult[i] = "工作"
+		}
+	}
+	for i := 12; i < 22; i++ {
+		if result[i] == 0 {
+			stringResult[i] = "关闭"
+		} else if result[i] == 1 {
+			stringResult[i] = "开通"
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"data": result,
+		"data": stringResult,
 	})
 }

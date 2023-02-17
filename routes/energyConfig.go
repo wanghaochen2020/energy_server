@@ -20,5 +20,4 @@ func EnergyConfigRouter(router *gin.RouterGroup) {
 	router.GET("energyConfig/getEnergySaving", energyConfig.GetEnergySaving)     //节约能耗
 	router.GET("energyConfig/getRunningCost", energyConfig.GetRunningCost)       //运行费用
 	router.GET("energyConfig/getCarbonEmission", energyConfig.GetCarbonEmission) //减少碳排放
-
 }
