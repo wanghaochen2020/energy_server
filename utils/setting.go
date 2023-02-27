@@ -28,6 +28,8 @@ var (
 	MongoName string //Mongodb数据库名
 
 	DeltaT int //计算服务的统计间隔
+
+	LoadPredictRouter string //负荷预测路由
 )
 
 func init() {
@@ -62,4 +64,6 @@ func LoadData(file *ini.File) {
 	MongoName = file.Section("mongodb").Key("MongoName").MustString("energy")
 
 	DeltaT = file.Section("calculator").Key("DeltaT").MustInt(1)
+
+	LoadPredictRouter = file.Section("loadPredict").Key("LoadPredictRouter").MustString("http://100.100.100.100:9876")
 }
