@@ -39,6 +39,7 @@ func InitRouter() { //可以返回一个*gin.Engine
 		routes.LoginRouter(rPublic)
 		routes.EnergyConfigRouter(rPublic)
 		routes.LoadPredictRouter(rPublic)
+		routes.BasicMapRouter(rPublic)
 	}
 	// rAuth组内的路由需要有jwt的token
 	rAuth := r.Group("api")

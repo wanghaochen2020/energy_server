@@ -46,49 +46,64 @@ var energyWeekly = model.EnergyConfigWeekly{
 //TODO:未来一周的温度
 func GetHeatStorageWeek(c *gin.Context) {
 	a := energyWeekly.GetHeatStorageAagin()
+	b := []int{4, 4, 2, 5, 6, 7, 6}
+	x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 
 	c.JSON(http.StatusOK, gin.H{
 		"再蓄热量": a,
+		"室外温度": b,
+		"x轴":   x,
 	})
 }
 
 func GetElectricityWeek(c *gin.Context) {
 	a := energyWeekly.GetPeakTransferPower(energyWeekly.GetHeatStorageAagin())
+	b := []int{4, 4, 2, 5, 6, 7, 6}
+	x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 
 	c.JSON(http.StatusOK, gin.H{
 		"移峰电量": a,
+		"室外温度": b,
+		"x轴":   x,
 	})
 }
 
 func GetConfigWeek(c *gin.Context) {
 	vally, other := energyWeekly.GetBoilerRunningTime()
-
+	x := []string{"2月28号", "3月1号", "3月2号", "3月3号", "3月4号", "3月5号", "3月6号"}
 	c.JSON(http.StatusOK, gin.H{
 		"谷电价":  vally,
 		"峰平电价": other,
+		"x轴":   x,
 	})
 }
 
 func GetEnergySaving(c *gin.Context) {
 	a := energyWeekly.GetEnergySaving()
+	x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": a,
+		"x轴":   x,
 	})
 }
 
 func GetRunningCost(c *gin.Context) {
 	a := energyWeekly.GetRunningCost()
+	x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": a,
+		"x轴":   x,
 	})
 }
 
 func GetCarbonEmission(c *gin.Context) {
 	a := energyWeekly.GetCarbonEmission(energyWeekly.GetEnergySaving())
+	x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": a,
+		"x轴":   x,
 	})
 }

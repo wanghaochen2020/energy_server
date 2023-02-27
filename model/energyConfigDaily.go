@@ -1,5 +1,10 @@
 package model
 
+import (
+	"fmt"
+	"strconv"
+)
+
 //import "fmt"
 
 type EnergyConfigDaily struct {
@@ -376,8 +381,9 @@ func (energy EnergyConfigDaily) GetTankRecommendedHourlyWorkingCondition() [6]fl
 	tankRecommendedHourlyWorkingCondition[2] = energy.Tank_top_export_temp
 	tankRecommendedHourlyWorkingCondition[4] = energy.Tank_top_export_temp
 	tankRecommendedHourlyWorkingCondition[5] = energy.Tank_top_export_temp
-	tankRecommendedHourlyWorkingCondition[1] = Q_z1
-	tankRecommendedHourlyWorkingCondition[3] = Q_z2
+	tankRecommendedHourlyWorkingCondition[1], _ = strconv.ParseFloat(fmt.Sprintf("%.2f", Q_z1), 64)
+	//tankRecommendedHourlyWorkingCondition[3] = Q_z2
+	tankRecommendedHourlyWorkingCondition[3], _ = strconv.ParseFloat(fmt.Sprintf("%.2f", Q_z2), 64)
 
 	return tankRecommendedHourlyWorkingCondition
 }
