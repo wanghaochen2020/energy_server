@@ -9,7 +9,7 @@ func main() {
 	model.InitDb()
 	model.InitRedis()
 	model.InitMongo()
-	//model.LoopQueryUpdate()
+	model.LoopQueryUpdate()
 	//引用路由组件
 	InitRouter()
 }

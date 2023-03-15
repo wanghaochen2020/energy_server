@@ -163,7 +163,7 @@ func updateMinute(t time.Time, upsert bool) {
 	lastMin := lastMinTime.Minute()
 	lastMinDayStr := fmt.Sprintf("%04d/%02d/%02d", lastMinTime.Year(), lastMinTime.Month(), lastMinTime.Day())
 	lastMinHourStr := fmt.Sprintf("%s %02d", lastMinDayStr, lastMinTime.Hour())
-	// lastMinStr := fmt.Sprintf("%s:%02d", lastMinHourStr, lastMinTime.Minute())
+	lastMinStr := fmt.Sprintf("%s:%02d", lastMinHourStr, lastMinTime.Minute())
 	var data float64
 
 	//报警数据
@@ -172,11 +172,11 @@ func updateMinute(t time.Time, upsert bool) {
 	UpdatePumpAlarm(lastMinHourStr, lastMin, lastMinTime)   //二次泵站
 	//之后计算要用的数据
 
-	exampleTime := "2022/05/01 08:05"
+	// exampleTime := "2022/05/01 08:05"
 	//二次泵站
 	var HeatData defs.LouHeatList
-	// err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "heat"}}).Decode(&HeatData)
-	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "heat"}}).Decode(&HeatData)
+	err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "heat"}}).Decode(&HeatData)
+	// err := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "heat"}}).Decode(&HeatData)
 	if err == nil {
 		dataList := CalcPumpHeat(&HeatData) //统计输热量
 		MongoUpdateList(lastMinHourStr, lastMin, defs.GroupHeatConsumptionHour1, dataList[0])
@@ -192,8 +192,8 @@ func updateMinute(t time.Time, upsert bool) {
 
 	//太阳能热水
 	var GAData defs.LouSolarWaterList
-	// GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "GA"}}).Decode(&GAData)
-	GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "GA"}}).Decode(&GAData)
+	GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", lastMinStr}, {"name", "GA"}}).Decode(&GAData)
+	// GAerr := MongoLoukong.FindOne(context.TODO(), bson.D{{"time", exampleTime}, {"name", "GA"}}).Decode(&GAData)
 	if GAerr == nil {
 		data = CalcSolarWaterHeatCollectionMin(&GAData.Info) //集热量
 		MongoUpdateList(lastMinHourStr, lastMin, defs.SolarWaterHeatCollectionHour, data)
