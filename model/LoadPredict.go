@@ -189,23 +189,25 @@ func GetLoad(index string, flag string) []float64 {
 	var load []float64
 
 	if flag == "today" {
+		//str := GetToday()
+		str := "2023/02/20"
 		switch index {
 		case "D1组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay1, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay1, str)
 		case "D2组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay2, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay2, str)
 		case "D3组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay3, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay3, str)
 		case "D4组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay4, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay4, str)
 		case "D5组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay5, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay5, str)
 		case "D6组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay6, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay6, str)
 		case "公共组团南区":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, str)
 		case "公共组团北区":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, str)
 		}
 	} else if flag == "yesterday" {
 		switch index {
@@ -253,6 +255,13 @@ func FindStart(value int) int {
 	Time := time.Unix(int64(value), 0)
 	Time2 := time.Date(Time.Year(), Time.Month(), Time.Day(), 0, 0, 0, 0, Time.Location())
 	return int(Time2.Unix())
+}
+
+func GetDay(v int64) string {
+	timeLayout := "2006-01-02 15:04:05"
+	timeStr := time.Unix(v, 0).Format(timeLayout)
+	a := strings.Split(timeStr, " ")
+	return a[0]
 }
 
 func GetToday() string {
