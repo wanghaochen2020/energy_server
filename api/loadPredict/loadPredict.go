@@ -10,7 +10,7 @@ import (
 func GetLoadStatistic(c *gin.Context) {
 	index := c.Query("index")
 	//a := model.GetLoad(index, "today")
-	//b := model.GetData("temperature", int(time.Now().Unix()))
+	//b := model.GetData("temperature", int(time.Now().Unix()),"")
 	var a, b, x []int
 
 	if index == "D1组团" {
@@ -75,7 +75,7 @@ func GetLoadPredict(c *gin.Context) {
 }
 
 func GetTemp(c *gin.Context) {
-	a := model.GetData("temperature", int(time.Now().Unix()))
+	a := model.GetData("temperature", int(time.Now().Unix()), "")
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": a,

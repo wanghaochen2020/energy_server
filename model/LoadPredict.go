@@ -1,9 +1,11 @@
 package model
 
 import (
+	"context"
 	"encoding/json"
 	"energy/defs"
 	"energy/utils"
+	"go.mongodb.org/mongo-driver/bson"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -41,6 +43,30 @@ type Forecast2 struct {
 	WindSpeed string `json:"windSpeed"`
 }
 
+type Atmosphere struct {
+	Time   int         `json:"time"`
+	Result Atmosphere2 `json:"data"`
+}
+
+type Atmosphere2 struct {
+	Wind        Atmosphere3
+	Temperature Atmosphere3
+	Humidity    Atmosphere3
+	Radiation   Atmosphere3
+}
+
+type Atmosphere3 struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type Kekong struct {
+	Time int     `json:"time"`
+	D4   float64 `json:"d4"`
+	D5   float64 `json:"d5"`
+	D6   float64 `json:"d6"`
+}
+
 func LoadPredict(index string) Output {
 	input := MakeInputBody(index)
 
@@ -65,12 +91,12 @@ func MakeInputBody(index string) []byte {
 
 	//前一天数据
 	load := GetLoad(index, "yesterday")
-	temperature := GetData("temperature", int(time.Now().Unix()-86400))
-	humidity := GetData("humidity", int(time.Now().Unix()-86400))
-	radiation := GetData("radiation", int(time.Now().Unix()-86400))
-	wind := GetData("wind", int(time.Now().Unix()-86400))
-	roomRate := GetData("roomRate", int(time.Now().Unix()-86400))
-	occupancyRate := GetData("occupancyRate", int(time.Now().Unix()-86400))
+	temperature := GetData("temperature", int(time.Now().Unix()-86400), index)
+	humidity := GetData("humidity", int(time.Now().Unix()-86400), index)
+	radiation := GetData("radiation", int(time.Now().Unix()-86400), index)
+	wind := GetData("wind", int(time.Now().Unix()-86400), index)
+	roomRate := GetData("roomRate", int(time.Now().Unix()-86400), index)
+	occupancyRate := GetData("roomRate", int(time.Now().Unix()-86400), index)
 
 	for i := 0; i < 24; i++ {
 		input.Load[i] = load[i]
@@ -100,11 +126,61 @@ func MakeInputBody(index string) []byte {
 }
 
 //访问办公网数据库
-func GetData(index string, base int) []float64 {
+func GetData(index string, base int, zutuan string) []float64 {
 	var array []float64
 	array = make([]float64, 24)
+	limit0, limit1 := FindIntervalDay(base)
 
-	//TODO:对办公网数据库读写
+	type Update struct {
+		Id        int
+		UpdatedAt string
+		TableName string
+	}
+
+	switch index {
+	case "roomRate":
+		var devices []Kekong
+		data, _ := Db.Collection("keKong").Find(context.TODO(), bson.M{"time": bson.M{"$gte": limit0, "$lt": limit1}})
+		err = data.All(context.TODO(), &devices)
+		if zutuan == "D4组团" {
+			for i := 0; i < 24; i++ {
+				array[i] = devices[i].D4
+			}
+		} else if zutuan == "D5组团" {
+			for i := 0; i < 24; i++ {
+				array[i] = devices[i].D5
+			}
+		} else if zutuan == "D6组团" {
+			for i := 0; i < 24; i++ {
+				array[i] = devices[i].D6
+			}
+		} else {
+			for i := 0; i < 24; i++ {
+				array[i] = devices[i].D4
+			}
+		}
+	default:
+		var devices []Atmosphere
+		data, _ := Db.Collection("atmosphere").Find(context.TODO(), bson.M{"time": bson.M{"$gte": limit0, "$lt": limit1}})
+		err = data.All(context.TODO(), &devices)
+		if index == "temperature" {
+			for i := 0; i < 24; i++ {
+				array[i], _ = strconv.ParseFloat(devices[i].Result.Temperature.Value, 64)
+			}
+		} else if index == "humidity" {
+			for i := 0; i < 24; i++ {
+				array[i], _ = strconv.ParseFloat(devices[i].Result.Humidity.Value, 64)
+			}
+		} else if index == "radiation" {
+			for i := 0; i < 24; i++ {
+				array[i], _ = strconv.ParseFloat(devices[i].Result.Radiation.Value, 64)
+			}
+		} else if index == "wind" {
+			for i := 0; i < 24; i++ {
+				array[i], _ = strconv.ParseFloat(devices[i].Result.Wind.Value, 64)
+			}
+		}
+	}
 
 	return array
 }
@@ -113,23 +189,25 @@ func GetLoad(index string, flag string) []float64 {
 	var load []float64
 
 	if flag == "today" {
+		//str := GetToday()
+		str := "2023/02/20"
 		switch index {
 		case "D1组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay1, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay1, str)
 		case "D2组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay2, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay2, str)
 		case "D3组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay3, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay3, str)
 		case "D4组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay4, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay4, str)
 		case "D5组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay5, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay5, str)
 		case "D6组团":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay6, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDay6, str)
 		case "公共组团南区":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, str)
 		case "公共组团北区":
-			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, GetToday())
+			load, _ = GetResultFloatList(defs.GroupHeatConsumptionDayPubS, str)
 		}
 	} else if flag == "yesterday" {
 		switch index {
@@ -179,6 +257,13 @@ func FindStart(value int) int {
 	return int(Time2.Unix())
 }
 
+func GetDay(v int64) string {
+	timeLayout := "2006-01-02 15:04:05"
+	timeStr := time.Unix(v, 0).Format(timeLayout)
+	a := strings.Split(timeStr, " ")
+	return a[0]
+}
+
 func GetToday() string {
 	timeLayout := "2006-01-02 15:04:05"
 	timeStr := time.Unix(time.Now().Unix(), 0).Format(timeLayout)
@@ -191,4 +276,11 @@ func GetYesterday() string {
 	timeStr := time.Unix(time.Now().Unix()-86400, 0).Format(timeLayout)
 	a := strings.Split(timeStr, " ")
 	return a[0]
+}
+
+func FindIntervalDay(value int) (int, int) {
+	Time := time.Unix(int64(value), 0)
+	Time1 := time.Date(Time.Year(), Time.Month(), Time.Day(), 0, 0, 0, 0, Time.Location())
+	Time2 := time.Date(Time.Year(), Time.Month(), Time.Day(), 24, 0, 0, 0, Time.Location())
+	return int(Time1.Unix()), int(Time2.Unix())
 }

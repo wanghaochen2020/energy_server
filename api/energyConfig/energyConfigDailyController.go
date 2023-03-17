@@ -27,8 +27,8 @@ var (
 	Peak_cost_time_2_end   = 21
 )
 
-//var loadDaily = [24]float64{537.41, 586.16, 618.91, 607.23, 608.5, 621.55, 645.52, 890.35, 690.17, 501.28, 1204.25, 915.07, 793.98, 748.76, 714.84, 694.95, 657.61, 681.41, 791.54, 999.22, 1156.91, 1264.27, 828.37, 661.38}
-var loadDaily = [24]float64{206.54, 250.18, 214.85, 167.64, 182.05, 191.49, 211.57, 89.44, 27.73, 14.62, 7.68, 32.10, 32.35, 4.84, 33.30, 50.11, 37.97, 5.39, 22.92, 23.98, 87.57, 79.91, 89.96, 203.82}
+//var loadDaily = [24]float64{206.54, 250.18, 214.85, 167.64, 182.05, 191.49, 211.57, 89.44, 27.73, 14.62, 7.68, 32.10, 32.35, 4.84, 33.30, 50.11, 37.97, 5.39, 22.92, 23.98, 87.57, 79.91, 89.96, 203.82}
+var loadDaily = [24]float64{369.94, 355.52, 324.63, 308.96, 289.64, 191.60, 333.00, 177.77, 215.62, 159.51, 165.07, 168.37, 235.35, 218.12, 337.49, 329.06, 140.63, 213.57, 282.12, 299.11, 373.90, 514.68, 313.60, 410.21}
 var energy = model.EnergyConfigDaily{
 	Qs:                      1000,
 	Tank_top_export_temp:    80,
@@ -66,20 +66,22 @@ func GetPeriod(c *gin.Context) {
 }
 
 func GetDeviceWorkTime(c *gin.Context) {
-	/*
-		var result [9]int
-		for i := 0; i < 9; i++ {
-			//data, _ := model.GetResultFloatList(defs.EnergyRunningTimeDay[i], model.UnixToString(int(time.Now().Unix())))
-			data, _ := model.GetResultFloatList(defs.EnergyRunningTimeDay[i], "2022/10/12")
-			for j := 0; j < len(data); j++ {
-				result[i] += int(data[j])
-			}
-		}
 
-	*/
+	var result [9]int
+	for i := 0; i < 9; i++ {
+		//data, _ := model.GetResultFloatList(defs.EnergyRunningTimeDay[i], model.UnixToString(int(time.Now().Unix())))
+		data, _ := model.GetResultFloatList(defs.EnergyRunningTimeDay[i], "2023/02/20")
+		for j := 0; j < len(data); j++ {
+			result[i] += int(data[j])
+		}
+	}
+	for i := 0; i < 9; i++ {
+		result[i] = result[i] / 60
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		//"data": result,
-		"data": []int{2, 2, 2, 2, 2, 2, 2, 2, 2},
+		"data": result,
+		//"data": []int{2, 2, 2, 2, 2, 2, 2, 2, 2},
 	})
 }
 
@@ -111,18 +113,20 @@ func GetLoadDetail(c *gin.Context) {
 }
 
 func GetBoilerConfigDaily(c *gin.Context) {
+
+	a, _ := model.GetResultFloatList(defs.EnergyBoilerRunningNum, "2023/02/20")
+	c.JSON(http.StatusOK, gin.H{
+		"实际": a,
+		"建议": energy.GetBoilerRunningNum(),
+	})
+
 	/*
-		a, _ := model.GetResultFloatList(defs.EnergyBoilerRunningNum, "2022/10/12")
 		c.JSON(http.StatusOK, gin.H{
-			"实际": a,
-			"建议": energy.GetBoilerRunningNum(),
+			"实际": []int{1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2},
+			"建议": []int{2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2},
 		})
 
 	*/
-	c.JSON(http.StatusOK, gin.H{
-		"实际": []int{1, 2, 2, 1, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2},
-		"建议": []int{2, 2, 2, 1, 2, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 2, 2},
-	})
 }
 
 func GetData(c *gin.Context) {
@@ -171,17 +175,13 @@ func GetDeviceWorkState(c *gin.Context) {
 	var stringResult [22]string
 
 	for i := 0; i < len(array); i++ {
-		a, _ := model.GetOpcFloatList(array[i], "2022/10/12 13")
+		a, _ := model.GetOpcFloatList(array[i], "2023/02/20 13") //ZS
 		if a[0] == 0 {
 			array2[i] = 0
 		} else {
 			array2[i] = 1
 		}
 	}
-
-	//TODO:去掉假数据
-	array2[0] = 1
-	array2[2] = 1
 
 	for i := 0; i < 4; i++ {
 		result[i] = array2[i]
