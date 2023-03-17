@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type EnergyConfigDailyController struct {
@@ -175,7 +177,7 @@ func GetDeviceWorkState(c *gin.Context) {
 	var stringResult [22]string
 
 	for i := 0; i < len(array); i++ {
-		a, _ := model.GetOpcFloatList(array[i], "2023/02/20 13") //ZS
+		a, _ := model.GetOpcFloatList(array[i], MakeTimeStr()) //ZS
 		if a[0] == 0 {
 			array2[i] = 0
 		} else {
@@ -212,4 +214,13 @@ func GetDeviceWorkState(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"data": stringResult,
 	})
+}
+
+func MakeTimeStr() string {
+	timeLayout := "2006-01-02 15:04:05"
+	timeStr := time.Unix(time.Now().Unix(), 0).Format(timeLayout)
+	a := strings.Split(timeStr, ":")
+	b := a[0]
+	b = strings.Replace(b, "-", "/", -1)
+	return b
 }
