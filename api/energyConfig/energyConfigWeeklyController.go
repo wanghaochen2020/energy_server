@@ -19,7 +19,7 @@ var loadWeekly = [7][24]float64{
 	{484.52, 380.37, 386.27, 409.90, 319.67, 267.47, 417.12, 209.60, 82.29, 38.84, 70.02, 62.94, 80.29, 71.43, 109.92, 76.45, 41.19, 60.57, 62.54, 231.44, 147.66, 267.45, 263.59, 251.67},
 	{206.54, 250.18, 214.85, 167.64, 182.05, 191.49, 211.57, 89.44, 27.73, 14.62, 7.68, 32.10, 32.35, 4.84, 33.30, 50.11, 37.97, 5.39, 22.92, 23.98, 87.57, 79.91, 89.96, 203.82}}
 var energyWeekly = model.EnergyConfigWeekly{
-	Qs: 1000,
+	Qs: 29768,
 
 	Heat_loss_rectify_coefficiency:       0.05,
 	Heat_to_power_transform_coefficiency: 1.11,
@@ -89,6 +89,7 @@ func GetConfigWeek(c *gin.Context) {
 
 func GetEnergySaving(c *gin.Context) {
 	a := energyWeekly.GetEnergySaving()
+	//a := []float64{103, 127, 113, 145, 110, 87, 105}
 	//x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 	x := MakeX()
 	c.JSON(http.StatusOK, gin.H{
@@ -109,6 +110,7 @@ func GetRunningCost(c *gin.Context) {
 
 func GetCarbonEmission(c *gin.Context) {
 	a := energyWeekly.GetCarbonEmission(energyWeekly.GetEnergySaving())
+	//a := []float64{54, 43, 47, 51, 61, 41, 52}
 	//x := []string{"2023-02-28", "2023-03-01", "2023-03-02", "2023-03-03", "2023-03-04", "2023-03-05", "2023-03-06"}
 	x := MakeX()
 	c.JSON(http.StatusOK, gin.H{
